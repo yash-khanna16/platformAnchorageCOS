@@ -8,7 +8,7 @@ export default async function middleware(req: NextRequest) {
 
 
   if (path === "/") {
-    return NextResponse.redirect(new URL("/order",req.nextUrl));
+    return NextResponse.redirect(new URL("/home",req.nextUrl));
   }
   
   return NextResponse.next();

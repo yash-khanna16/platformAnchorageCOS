@@ -1,5 +1,5 @@
 "use client"
-import { Home, LocalLaundryService, Search, History, AccountCircle } from "@mui/icons-material";
+import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood } from "@mui/icons-material";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -11,13 +11,13 @@ function Navbar() {
   const router = useRouter()
 
   const options = [
-    { icon: <Home fontSize="medium" sx={{ color: selected === 0 ? '#000000' : '#737373' }} />, title: 'Home', url: '/home' },
+    { icon: <Fastfood fontSize="medium" sx={{ color: selected === 0 ? '#000000' : '#737373' }} />, title: 'F & B ', url: '/home' },
     { icon: <History fontSize="medium" sx={{ color: selected === 1 ? '#000000' : '#737373' }} />, title: 'Orders', url: '/history' },
     { icon: <AccountCircle fontSize="medium" sx={{ color: selected === 2 ? '#000000' : '#737373' }} />, title: 'Account', url: '/account' },
   ];
 
   return (
-    <div className="fixed justify-center cursor-pointer  flex border-t gap-2 bottom-0 w-full  bg-white shadow-2xl">
+    <div className="fixed justify-center cursor-pointer h-16  flex border-t gap-2 bottom-0 w-full  bg-white shadow-2xl">
       {options.map((option, index) => (
         <div
         onClick={()=>{router.push(option.url)}}
