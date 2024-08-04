@@ -7,7 +7,12 @@ import { fetchBookingByRoom } from "../actions/api";
 import EnterEmail from "./EnterEmail";
 import VerifyOTP from "./VerifyOTP";
 
-export default function Home() {
+
+type HomePropsType={
+  setPlaceOrderModal:React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const Home:React.FC<HomePropsType> =({setPlaceOrderModal})=> {
   const params = useSearchParams();
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState<string>("");
@@ -17,6 +22,9 @@ export default function Home() {
       <div className="pt-4 px-4  ">
         <Button
           onClick={() => {
+            if(step===0){
+              setPlaceOrderModal(false);
+            }
             if (step > 0) {
               setStep(step - 1);
             }
@@ -27,7 +35,8 @@ export default function Home() {
         </Button>
       </div>
       {step === 0 && <EnterEmail step={step} email={email} setEmail={setEmail} setStep={setStep} />}
-      {step === 1 && <VerifyOTP email={email} />}
+      {step === 1 && <VerifyOTP email={email} setPlaceOrderModal={setPlaceOrderModal}/>}
     </div>
   );
 }
+export default Home;

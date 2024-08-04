@@ -54,8 +54,62 @@ export async function verifyOTP(email: string, otp: string) {
       headers: {
         "Content-Type": "application/json",
         email: email,
-        otp: otp
+        otp: otp,
       },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+export async function fetchAllItems() {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchAllItems`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function placeOrder(dataSend: {
+  order_id: string;
+  booking_id: string;
+  room: string|null;
+  remarks: string;
+  created_at: string;
+  status: string;
+  items: { item_id: string; qty: number }[];
+}) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({orderDetails:dataSend}),
       cache: "no-cache",
     });
 
