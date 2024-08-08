@@ -1,4 +1,4 @@
-import { Add, ArrowForward, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
+import { Add, ArrowForward, Close, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import React, { useEffect, useState } from "react";
@@ -34,14 +34,7 @@ type CartPropsType = {
   toggleExpand: (id: string) => void;
 };
 
-const Cart: React.FC<CartPropsType> = ({
-  selected,
-  cart,
-  setCart,
-  setSelected,
-  expandedId,
-  toggleExpand,
-}) => {
+const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, expandedId, toggleExpand }) => {
   const [note, setNote] = useState(false);
   const [noteContent, setNoteContent] = useState("");
   const [noteContentConfirm, setNoteContentConfirm] = useState("");
@@ -72,9 +65,9 @@ const Cart: React.FC<CartPropsType> = ({
         console.log(dataSend);
         const result = await placeOrder(dataSend);
         console.log(result);
-        let time_to_prepare=0;
-        result.details.items.forEach((element:any) => {
-          time_to_prepare=(time_to_prepare>element.time_to_prepare?time_to_prepare:element.time_to_prepare);
+        let time_to_prepare = 0;
+        result.details.items.forEach((element: any) => {
+          time_to_prepare = time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
         });
         setTimeToPrepare(time_to_prepare);
         setConfirmModal(true);
@@ -91,9 +84,7 @@ const Cart: React.FC<CartPropsType> = ({
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
         );
       } else {
         return [...prevSelected, { ...item, quantity: 1 }];
@@ -106,9 +97,7 @@ const Cart: React.FC<CartPropsType> = ({
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
         return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id
-            ? { ...cartItem, quantity: cartItem.quantity - 1 }
-            : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
         );
       } else {
         return prevSelected.filter((cartItem) => cartItem.item_id !== item.item_id);
@@ -123,44 +112,37 @@ const Cart: React.FC<CartPropsType> = ({
     selected.forEach((element) => {
       totalAmount += element.price * element.quantity;
     });
+    if (selected.length === 0) setCart(false);
     setTotal(totalAmount);
   }, [selected]);
 
   return (
-    <div>
+    <div className="font-montserrat py-2">
       <div style={{ height: "100vh" }}>
-        <div className="sticky top-0 z-10 bg-white border-b border-black">
+        <div className="sticky top-0 z-10 bg-white border-b ">
           <div className="flex justify-between mb-1 p-2 items-center">
             <div className="flex items-end font-semibold text-2xl">
               <Image
                 src={Logo}
                 alt="Logo"
-                width={30}
-                height={30}
+                width={36}
+                height={36}
                 onClick={() => {
                   setCart(!cart);
                 }}
               />
-              <span className="ml-2">Anchorage COS</span>
             </div>
-            <ShoppingCart
-              sx={{ color: "#111" }}
-              className="relative top-0.5"
-              onClick={() => setCart(!cart)}
-            />
+            <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCart(!cart)} />
           </div>
         </div>
-        <div className="p-3 text-xl font-medium border-b border-dashed ">Your Cart</div>
+        <div className="p-3 text-2xl font-semibold border-b border-dashed ">Your Cart</div>
 
         {selected.map((item: CartType) => (
           <div key={item.item_id} className="p-3 border-b border-dashed">
             <div className="flex text-base justify-between">
               <div>
                 <div className="text-lg">{item.name}</div>
-                <div className="text-xs">
-                  <CurrencyRupee fontSize="small" style={{ height: "10px" }} />
-                  <span className="relative right-2">{item.price}</span>
-                </div>
+                <div className="text-xs">₹ {item.price}</div>
               </div>
 
               <div className="relative border-red-500 border w-20 h-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
@@ -177,10 +159,7 @@ const Cart: React.FC<CartPropsType> = ({
               {expandedId === item.item_id ? (
                 <div>
                   {item.description}{" "}
-                  <button
-                    className="font-medium text-blue-500"
-                    onClick={() => toggleExpand(item.item_id)}
-                  >
+                  <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
                     show less
                   </button>
                 </div>
@@ -188,22 +167,14 @@ const Cart: React.FC<CartPropsType> = ({
                 <div>
                   {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
                   {item.description.length > 10 && (
-                    <button
-                      className="font-medium text-blue-500"
-                      onClick={() => toggleExpand(item.item_id)}
-                    >
+                    <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
                       read more
                     </button>
                   )}
                 </div>
               )}
-              <div className="flex justify-end text-sm ml-2">
-                <CurrencyRupee
-                  className="relative top-0.5"
-                  fontSize="small"
-                  style={{ height: "15px" }}
-                />
-                <span>{item.price * item.quantity}</span>
+              <div className="flex justify-end w-24 text-sm ml-2">
+                <span>₹ {item.price * item.quantity}</span>
               </div>
             </div>
           </div>
@@ -220,23 +191,14 @@ const Cart: React.FC<CartPropsType> = ({
         >
           Add a note for the restaurant
         </button>
-        {noteError && (
-          <div className="p-2 mx-3 text-red-600 text-sm">
-            At least add 1 item to add a note for the restaurant
-          </div>
-        )}
-        <div className="p-3 flex justify-between text-lg pb-24">
+        {noteError && <div className="p-2 mx-3 text-red-600 text-sm">At least add 1 item to add a note for the restaurant</div>}
+        <div className="p-3 font-medium flex justify-between text-lg pb-24">
           <span>Total :</span>
-          <span>
-            <CurrencyRupee fontSize="small" style={{ height: "15px" }} />
-            {total}
-          </span>
+          <span>₹ {total}</span>
         </div>
-        <div className="fixed px-3 bottom-3 w-full">
+        <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full">
           {placeOrderError && (
-            <div className="p-2 mx-3 text-center text-red-600 text-sm">
-              At least add 1 item to place an order
-            </div>
+            <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
           )}
           <button
             className="p-3 border text-xl font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
@@ -263,20 +225,20 @@ const Cart: React.FC<CartPropsType> = ({
           setNote(true);
         }}
       >
-        <div className="bg-slate-200 px-4 py-2" style={{ height: "50vh" }}>
-          <div className="mx-2 font-semibold text-gray-400">Add a note for the restaurant</div>
-          <div className="p-3 mt-5 bg-white rounded-2xl">
+        <div className="font-montserrat px-4 py-6" style={{ height: "50vh" }}>
+          <div className="mx-2 text-slate-700 font-medium ">Add a note for the restaurant</div>
+          <div className="py-2 mt-5 bg-white rounded-2xl">
             <textarea
               onChange={(e) => {
                 setNoteContent(e.target.value);
               }}
               value={noteContent}
-              rows={8}
-              className="p-3 bg-slate-100 border w-full rounded-lg"
+              rows={10}
+              className="p-3 outline-none bg-gray-50 border w-full rounded-lg"
             />
           </div>
         </div>
-        <div className="flex px-4 fixed bottom-4 w-full mt-5 gap-3">
+        <div className="flex px-4 font-montserrat fixed bottom-4 w-full mt-5 gap-3">
           <button
             onClick={() => {
               setNoteContent("");
@@ -325,15 +287,15 @@ const Cart: React.FC<CartPropsType> = ({
               <div className="font-semibold text-2xl text-center">Order Placed Successfully!</div>
             </div>
             <div className="flex text-lg font-medium justify-between">
-            <div>Expected Waiting Time:</div>
-            <div>{timeToPrepare} mins</div>
+              <div>Expected Waiting Time:</div>
+              <div>{timeToPrepare} mins</div>
             </div>
             <div className="flex justify-between">
-                <div className=" capitalize">Item</div>
-                <div>Qty</div>
-              </div>
-            {selected.map((item: CartType) => (
-              <div className="flex justify-between border-b border-dashed">
+              <div className=" capitalize">Item</div>
+              <div>Qty</div>
+            </div>
+            {selected.map((item: CartType, index: number) => (
+              <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item.name}</div>
                 <div className="mr-2">{item.quantity}</div>
               </div>
