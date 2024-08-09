@@ -1,5 +1,5 @@
 "use client";
-import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood } from "@mui/icons-material";
+import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood, ChecklistRtl } from "@mui/icons-material";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -7,7 +7,7 @@ import React, { useEffect } from "react";
 function Navbar() {
   const pathname = usePathname();
   const path = pathname.split("/")[1];
-  const selected = path === "home" ? 0 : path === "history" ? 1 : 2;
+  const selected = path === "home" ? 0 : path === "timeline" ? 1 : 2;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -18,9 +18,9 @@ function Navbar() {
       url: "/home",
     },
     {
-      icon: <History className="text-[18px]" sx={{ color: selected === 1 ? "text-red-600" : "#737373" }} />,
-      title: "Orders",
-      url: "/history",
+      icon: <ChecklistRtl className="text-[18px]" sx={{ color: selected === 1 ? "text-red-600" : "#737373" }} />,
+      title: "Timeline",
+      url: "/timeline",
     },
     {
       icon: <AccountCircle className="text-[18px]" sx={{ color: selected === 2 ? "text-red-600" : "#737373" }} />,
@@ -36,7 +36,7 @@ function Navbar() {
   };
 
   return (
-    <div className="fixed font-montserrat justify-center  cursor-pointer h-16 flex  gap-2 bottom-0 w-full  bg-white shadow-inner border-t">
+    <div className="fixed z-50 font-montserrat justify-center  cursor-pointer h-16 flex  gap-2 bottom-0 w-full  bg-white shadow-inner border-t">
       {options.map((option, index) => (
         <div
           onClick={()=>{handleNavigation(option.url)}}

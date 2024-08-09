@@ -124,3 +124,51 @@ export async function placeOrder(dataSend: {
     throw error;
   }
 }
+
+export async function fetchBookingData(bookingId: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchBookingByBookingId`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        bookingid:bookingId
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function fetchOrdersByBookingId(bookingId: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchOrdersByBookingId`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        bookingid:bookingId
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
