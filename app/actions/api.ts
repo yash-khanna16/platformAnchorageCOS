@@ -115,10 +115,13 @@ export async function placeOrder(dataSend: {
 
     const data = await response.json(); // Parse the JSON response
     if (!response.ok) {
+      if (response.status === 401) {
+        return {status: 401, data: data}
+      }
       const error = new Error(await response.text());
       throw error;
     }
-    return data;
+    return {status: response.status, data:data};
   } catch (error) {
     console.log(error);
     throw error;
