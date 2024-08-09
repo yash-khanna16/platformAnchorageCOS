@@ -12,8 +12,7 @@ type HomePropsType={
   setPlaceOrderModal:React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const Home:React.FC<HomePropsType> =({setPlaceOrderModal})=> {
-  const params = useSearchParams();
+const Login:React.FC<HomePropsType> =({setPlaceOrderModal})=> {
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState<string>("");
 
@@ -39,4 +38,4 @@ const Home:React.FC<HomePropsType> =({setPlaceOrderModal})=> {
     </div>
   );
 }
-export default Home;
+export default Login;

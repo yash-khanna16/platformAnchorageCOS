@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { Suspense } from "react";
 
 function History() {
   return (
-    <div>History</div>
-  )
+    <Suspense>
+      <div>History</div>
+    </Suspense>
+  );
 }
 
-export default History
+export default History;

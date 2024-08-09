@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { Suspense } from "react";
 
 function Account() {
   return (
-    <div>Account</div>
-  )
+    <Suspense>
+      <div>Account</div>
+    </Suspense>
+  );
 }
 
-export default Account
+export default Account;

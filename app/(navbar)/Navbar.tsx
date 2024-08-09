@@ -2,7 +2,7 @@
 import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood } from "@mui/icons-material";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 
 function Navbar() {
   const pathname = usePathname();
@@ -36,21 +36,27 @@ function Navbar() {
   };
 
   return (
-    <div className="fixed font-montserrat justify-center  cursor-pointer h-16 flex  gap-2 bottom-0 w-full  bg-white shadow-inner border-t">
-      {options.map((option, index) => (
-        <div
-          onClick={()=>{handleNavigation(option.url)}}
-          key={index}
-          className={`flex  relative flex-col w-full  justify-center items-center px-4 py-2 gap-1 ${
-            index === selected ? "text-red-600  border-t-red-600" : "text-[#737373]"
-          }`}
-        >
-          {index === selected && <div className="h-1 absolute top-0  rounded-b-full w-[70%] bg-red-500  "></div>}
-          <div className="flex justify-center items-center">{option.icon}</div>
-          <div className={`text-xs font-semibold ${index === selected ? "text-red-600" : "text-[#737373]"}`}>{option.title}</div>
-        </div>
-      ))}
-    </div>
+    <Suspense>
+      <div className="fixed font-montserrat justify-center  cursor-pointer h-16 flex  gap-2 bottom-0 w-full  bg-white shadow-inner border-t">
+        {options.map((option, index) => (
+          <div
+            onClick={() => {
+              handleNavigation(option.url);
+            }}
+            key={index}
+            className={`flex  relative flex-col w-full  justify-center items-center px-4 py-2 gap-1 ${
+              index === selected ? "text-red-600  border-t-red-600" : "text-[#737373]"
+            }`}
+          >
+            {index === selected && <div className="h-1 absolute top-0  rounded-b-full w-[70%] bg-red-500  "></div>}
+            <div className="flex justify-center items-center">{option.icon}</div>
+            <div className={`text-xs font-semibold ${index === selected ? "text-red-600" : "text-[#737373]"}`}>
+              {option.title}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Suspense>
   );
 }
 
