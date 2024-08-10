@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { SwipeableDrawer } from "@mui/material";
-import LoginPage from "../../order/page";
+import LoginPage from "../../components/Login";
 import { CircularProgress } from "@mui/joy";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { SwipeableDrawer } from "@mui/material";
-import LoginPage from "../../order/page";
+import LoginPage from "../../components/Login";
 import { fetchBookingData, fetchOrdersByBookingId } from "@/app/actions/api";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";

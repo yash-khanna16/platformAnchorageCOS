@@ -3,7 +3,7 @@ import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import React, { useEffect, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import LoginPage from "../../order/page";
+import LoginPage from "../../components/Login";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { placeOrder } from "@/app/actions/api";
 import { useSearchParams } from "next/navigation";

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Navbar from "./Navbar";
 
 export default function layout({
@@ -6,9 +7,11 @@ export default function layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="mb-16">
-      <div>{children}</div>
-      <Navbar />
-    </div>
+    <Suspense fallback={<div>Something went wrong!</div>}>
+      <div className="mb-16">
+        <div>{children}</div>
+        <Navbar />
+      </div>
+    </Suspense>
   );
 }
