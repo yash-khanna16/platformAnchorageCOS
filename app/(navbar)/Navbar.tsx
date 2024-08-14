@@ -1,8 +1,9 @@
 "use client";
-import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood, ChecklistRtl } from "@mui/icons-material";
+import { Home, LocalLaundryService, Search, History, AccountCircle, Fastfood, ChecklistRtl, CalendarMonth } from "@mui/icons-material";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
+import Schedule from "../assets/schedule";
 
 function Navbar() {
   const pathname = usePathname();
@@ -18,10 +19,11 @@ function Navbar() {
       url: "/home",
     },
     {
-      icon: <ChecklistRtl className="text-[18px]" sx={{ color: selected === 1 ? "text-red-600" : "#737373" }} />,
-      title: "Timeline",
+      icon: <Schedule  selected={selected} />,
+      title: "Schedule",
       url: "/timeline",
     },
+    
     {
       icon: <AccountCircle className="text-[18px]" sx={{ color: selected === 2 ? "text-red-600" : "#737373" }} />,
       title: "Account",
