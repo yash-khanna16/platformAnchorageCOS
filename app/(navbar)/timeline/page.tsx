@@ -7,21 +7,22 @@ import { CircularProgress } from "@mui/joy";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle, RadioButtonUnchecked } from "@mui/icons-material";
+import {
+  LocationOn,
+  NearMe,
+  Place,
+} from "@mui/icons-material";
 
-// Define the types for the events
 type Event =
   | { checkin: { Date: string; Time: string } }
   | { movement: { Date: string; Time: string } }
   | { checkOut: { Date: string; Time: string } };
 
-// Function to parse date and time strings into Date objects
 const parseDateTime = (date: string, time: string): Date | null => {
   try {
-    // Convert the date from DD-MM-YYYY to YYYY-MM-DD format
     const [day, month, year] = date.split("-");
     const formattedDate = `${year}-${month}-${day}`;
-    const dateTimeString = `${formattedDate}T${time}:00`; // Add seconds if needed
+    const dateTimeString = `${formattedDate}T${time}:00`;
     return new Date(dateTimeString);
   } catch (error) {
     console.error("Error parsing date and time:", error);
@@ -29,17 +30,35 @@ const parseDateTime = (date: string, time: string): Date | null => {
   }
 };
 
-// Function to format Date object into 'DD/MM/YYYY' and 'HH:mm'
 const formatDate = (date: Date): { date: string; time: string } => {
   const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, "0");
+
+  let hours = date.getHours();
   const minutes = String(date.getMinutes()).padStart(2, "0");
 
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12; // Convert 24-hour format to 12-hour format
+
+  // Array of short month names
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
   return {
-    date: `${day}/${month}/${year}`,
-    time: `${hours}:${minutes}`,
+    date: `${monthNames[date.getMonth()]} ${day}, ${year}`,
+    time: `${String(hours).padStart(2, "0")}:${minutes} ${ampm}`,
   };
 };
 
@@ -56,6 +75,7 @@ function Timeline() {
       if (auth && !dataFetchedRef.current) {
         dataFetchedRef.current = true;
         setSkeleton(false);
+        console.log(auth.bookingid);
       } else if (!auth) {
         setPlaceOrderModal(true);
       }
@@ -81,17 +101,17 @@ function Timeline() {
   }, [placeOrderModal]);
 
   const data: Event[] = [
-    { checkin: { Date: "08-08-2024", Time: "04:45" } },
-    { movement: { Date: "09-08-2024", Time: "23:45" } },
-    { movement: { Date: "10-08-2024", Time: "14:45" } },
-    { checkOut: { Date: "11-08-2024", Time: "22:45" } },
+    { checkin: { Date: "11-08-2024", Time: "04:45" } },
+    { movement: { Date: "11-08-2024", Time: "23:45" } },
+    { movement: { Date: "13-08-2024", Time: "14:45" } },
+    { checkOut: { Date: "13-08-2024", Time: "22:45" } },
   ];
 
   const currentTime = new Date();
 
   return (
-    <div className="font-montserrat">
-      <div className="sticky top-0 z-50 bg-white shadow-lg">
+    <div className="font-montserrat bg-[#FBFAFF] max-h-full">
+      <div className="sticky top-0 z-50 bg-white shadow-lg ">
         <div className="flex justify-between mb-1 pt-4 p-2 items-center">
           <Image src={Logo} alt="Logo" width={36} height={36} />
           <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
@@ -101,70 +121,119 @@ function Timeline() {
       </div>
       {!skeleton ? (
         <>
-          <div className="text-center text-3xl font-medium mt-4 mb-2">Timeline</div>
-          <div className="flex items-center flex-col">
+          <div className="py-2 px-5 text-gray-800 text-2xl font-medium mt-4 mb-2">Schedule</div>
+          <div className="px-5">
             {data.map((event, index) => {
               let eventDateTime: Date | null = null;
               let eventLabel = "";
-              let Icon = RadioButtonUnchecked;
 
               if ("checkin" in event) {
                 eventDateTime = parseDateTime(event.checkin.Date, event.checkin.Time);
                 eventLabel = "Check In";
-                Icon = CheckCircle;
               } else if ("movement" in event) {
                 eventDateTime = parseDateTime(event.movement.Date, event.movement.Time);
-                eventLabel = "Movement";
-                Icon = RadioButtonUnchecked; // Example, update if needed
+                eventLabel = "Trip";
               } else if ("checkOut" in event) {
                 eventDateTime = parseDateTime(event.checkOut.Date, event.checkOut.Time);
                 eventLabel = "Check Out";
-                Icon = RadioButtonUnchecked;
               }
-
-              // Check if eventDateTime is valid
               const isValidDate = eventDateTime !== null && !isNaN(eventDateTime.getTime());
-
-              
-
               return (
-                <React.Fragment key={index}>
-                  {index>0 ? ( eventDateTime && currentTime > eventDateTime ?(
-                    <div className="w-[4px] h-9 bg-green-600 mx-auto scale-y-[350%]"></div>
-                  ):(<div className="w-[4px] h-9 bg-gray-300 mx-auto scale-y-[350%]"></div>)):null}
-                  <div
-                    className={`text-[#7a7a7a] my-2 gap-x-2 flex z-10 relative bg-white border p-3 rounded-lg`}
-                  >
-                    <div className="my-auto">
+                <div key={index} className="flex my-1 gap-1 mb-3">
+                  <div className="flex flex-col w-2/12">
+                    {eventDateTime ? (
+                      <div className=" text-sm font-semibold mb-1">
+                        {eventDateTime.toLocaleString("default", { month: "short" })}
+                      </div>
+                    ) : null}
+                    <div className=" flex items-center mb-1">
                       {isValidDate && eventDateTime && currentTime > eventDateTime ? (
-                        <CheckCircle className="z-10 text-green-600" />
+                        <>
+                          <div className="border-[#18C09C] bg-[#18C09C] text-white  border-2 w-7 h-7 rounded-full flex items-center justify-center p-1">
+                            <span className=" text-center text-sm font-semibold ">
+                              {eventDateTime.getDate()}
+                            </span>
+                          </div>
+                          <div className="h-[1px] w-[25px] rounded-full ml-1 bg-[#18C09C]"></div>
+                        </>
                       ) : (
-                        <RadioButtonUnchecked className="z-10 text-[#7a7a7a]" />
+                        <>
+                          <div className=" border-[#62AFFF] bg-[#62AFFF] text-white  border-2 w-7 h-7 rounded-full flex items-center justify-center p-1">
+                            {eventDateTime ? (
+                              <span className=" text-center text-sm font-semibold  ">
+                                {eventDateTime.getDate()}
+                              </span>
+                            ) : (
+                              <span></span>
+                            )}
+                          </div>
+                          <div className="h-[1px] w-[25px] rounded-full ml-2 bg-[#62AFFF]"></div>
+                        </>
                       )}
                     </div>
-                    <div>
-                      <div className="text-xl text-red-500">{eventLabel}</div>
-                      <div className="text-sm">
-                        <div>
-                          Date:{" "}
-                          <span className="text-red-500">
-                            {isValidDate && eventDateTime
-                              ? formatDate(eventDateTime).date
-                              : "Invalid Date"}
-                          </span>
-                        </div>
-                        <div>
-                          Time:{" "}
-                          <span className="text-red-500">
+                    <div className="h-[75%]">
+                      {index < data.length - 1 ? (
+                        eventDateTime && currentTime > eventDateTime ? (
+                          <div className="w-[3px] h-full rounded-full ml-3  bg-[#18C09C]"></div>
+                        ) : (
+                          <div className="w-[3px] h-full rounded-full ml-3  bg-[#62AFFF]"></div>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="w-10/12 py-4 px-2">
+                    <div className=" px-3 py-2 flex bg-white border  rounded-2xl ">
+                      <div className="w-full">
+                        <div className="text-sm pt-2 mb-2 flex justify-between">
+                          <span className="font-semibold">
                             {isValidDate && eventDateTime
                               ? formatDate(eventDateTime).time
                               : "Invalid Time"}
                           </span>
+                          <div className="text-gray-800 ">
+                            {isValidDate && eventDateTime
+                              ? formatDate(eventDateTime).date
+                              : "Invalid Time"}
+                          </div>
+                        </div>
+                        <div className="text-lg mb-3 py-2 font-medium flex items-center ">
+                          {eventLabel}
+                          {(eventLabel === "Check In" || eventLabel === "Check Out") && (
+                            <span className="text-[13px] ml-2 py-0 px-[10px] text-purple-600 font-semibold border border-purple-200 bg-purple-200 rounded-full ">
+                              ROOM: {room}
+                            </span>
+                          )}
+                        </div>
+                        {/* <div className="text-sm mb-2 text-gray-500 font-medium">
+                          Date -{" "}
+                          <span>
+                            {isValidDate && eventDateTime
+                              ? formatDate(eventDateTime).date
+                              : "Invalid Date"}
+                          </span>
+                        </div> */}
+                        <div className="text-sm text-gray-500 mb-2 flex items-center font-medium">
+                          {eventLabel === "Check In" || eventLabel === "Check Out" ? (
+                            <>
+                              <LocationOn className="text-[15px] mr-1" />
+                              Anchorage
+                            </>
+                          ) : (
+                            <div className="flex justify-between items-center w-full pr-2">
+                              <div className="flex items-center">
+                                <Place className="text-[15px] mr-1" /> Anchorage
+                              </div>
+                              <div className="flex items-center">
+                                <NearMe className="text-[15px] mr-1" />
+                                Airport
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
-                </React.Fragment>
+                </div>
               );
             })}
           </div>
