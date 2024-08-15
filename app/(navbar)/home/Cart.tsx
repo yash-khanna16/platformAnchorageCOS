@@ -6,9 +6,10 @@ import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import LoginPage from "../../components/Login";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { placeOrder } from "@/app/actions/api";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Modal, ModalClose, ModalDialog, DialogContent } from "@mui/joy";
 import { CheckCircle } from "@mui/icons-material";
+import { useCart } from "@/lib/CartContext";
 
 type DataType = {
   available: boolean;
@@ -26,15 +27,13 @@ type CartType = DataType & {
 };
 
 type CartPropsType = {
-  selected: CartType[];
-  setSelected: React.Dispatch<React.SetStateAction<CartType[]>>;
-  cart: boolean;
-  setCart: React.Dispatch<React.SetStateAction<boolean>>;
+  cartOpen: boolean;
+  setCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   expandedId: string | null;
   toggleExpand: (id: string) => void;
 };
 
-const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, expandedId, toggleExpand }) => {
+const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, toggleExpand }) => {
   const [note, setNote] = useState(false);
   const [noteContent, setNoteContent] = useState("");
   const [noteContentConfirm, setNoteContentConfirm] = useState("");
@@ -47,17 +46,19 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
   const [notAvailable, setNotAvailable] = useState<{item_id: string, name: string, available: boolean}[]>([])
   const [total, setTotal] = useState(0);
   const searchParams = useSearchParams();
+  const { cart, setCart } = useCart();
+  const router = useRouter();
   const handlePlaceOrder = async () => {
     const auth = await getAuthCustomer();
     if (auth) {
       try {
         const room = searchParams.get("room");
-        const items = selected.map((item: CartType) => {
+        const items = cart.map((item: CartType) => {
           return { item_id: item.item_id, qty: item.quantity };
         });
         const dataSend = {
           order_id: "",
-          booking_id: auth.bookingId as string,
+          booking_id: auth.booking_id as string,
           room: room,
           remarks: noteContentConfirm,
           created_at: "",
@@ -88,27 +89,27 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
   };
 
   const handleAddItem = (item: DataType) => {
-    setSelected((prevSelected) => {
-      const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
-        return prevSelected.map((cartItem) =>
+        return prevCart.map((cartItem) =>
           cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
         );
       } else {
-        return [...prevSelected, { ...item, quantity: 1 }];
+        return [...prevCart, { ...item, quantity: 1 }];
       }
     });
   };
 
   const handleRemoveItem = (item: DataType) => {
-    setSelected((prevSelected) => {
-      const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
-        return prevSelected.map((cartItem) =>
+        return prevCart.map((cartItem) =>
           cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
         );
       } else {
-        return prevSelected.filter((cartItem) => cartItem.item_id !== item.item_id);
+        return prevCart.filter((cartItem) => cartItem.item_id !== item.item_id);
       }
     });
   };
@@ -117,12 +118,12 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
     setNoteError(false);
     setPlaceOrderError(false);
     let totalAmount = 0;
-    selected.forEach((element) => {
+    cart.forEach((element) => {
       totalAmount += element.price * element.quantity;
     });
-    if (selected.length === 0) setCart(false);
+    if (cart.length === 0) setCartOpen(false);
     setTotal(totalAmount);
-  }, [selected]);
+  }, [cart]);
 
   return (
     <div className="font-montserrat py-2">
@@ -136,16 +137,16 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
                 width={36}
                 height={36}
                 onClick={() => {
-                  setCart(!cart);
+                  setCartOpen(!cartOpen);
                 }}
               />
             </div>
-            <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCart(!cart)} />
+            <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCartOpen(!cartOpen)} />
           </div>
         </div>
         <div className="p-3 text-2xl font-semibold border-b border-dashed ">Your Cart</div>
 
-        {selected.map((item: CartType) => (
+        {cart.map((item: CartType) => (
           <div key={item.item_id} className="p-3 border-b border-dashed">
             <div className="flex text-base justify-between">
               <div>
@@ -190,7 +191,7 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
         <button
           className="text-xs p-2 rounded-lg mt-2 mx-3 border"
           onClick={() => {
-            if (selected.length > 0) {
+            if (cart.length > 0) {
               setNote(!note);
             } else {
               setNoteError(true);
@@ -211,7 +212,7 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
           <button
             className="p-3 border text-xl font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
             onClick={() => {
-              if (selected.length > 0) {
+              if (cart.length > 0) {
                 handlePlaceOrder();
               } else {
                 setPlaceOrderError(true);
@@ -285,6 +286,11 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
         open={confirmModal}
         onClose={() => {
           setConfirmModal(false);
+          setCart([]);
+          const query = searchParams.toString();
+          const newUrl = query ? `/account?${query}` : '/account';
+          router.push(newUrl);
+          
         }}
       >
         <ModalDialog style={{ width: "90vw" }}>
@@ -302,7 +308,7 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
               <div className=" capitalize">Item</div>
               <div>Qty</div>
             </div>
-            {selected.map((item: CartType, index: number) => (
+            {cart.map((item: CartType, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item.name}</div>
                 <div className="mr-2">{item.quantity}</div>
@@ -334,7 +340,7 @@ const Cart: React.FC<CartPropsType> = ({ selected, cart, setCart, setSelected, e
             {notAvailable.map((item_not_available, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item_not_available.name}</div>
-                <div className="mr-2">{selected.find((item)=> item.item_id === item_not_available.item_id)?.quantity}</div>
+                <div className="mr-2">{cart.find((item)=> item.item_id === item_not_available.item_id)?.quantity}</div>
               </div>
             ))}
             <div className="mt-6 text-sm">Please try removing the above items and try again</div>

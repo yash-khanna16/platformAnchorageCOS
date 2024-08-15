@@ -1,5 +1,9 @@
 "use server"
 import { jwtVerify } from 'jose';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.Secret_Key as string;
+
 
 export async function parseJwt(token: string | undefined) {
     if (!token || token === undefined || token.split('.').length<2 ) { return; }
@@ -22,6 +26,11 @@ export async function validate(token: string | undefined) {
         return;
     }
 }
+
+export async function createToken(payload: object, expiresIn: string | number = '1h') {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+}
+
 
 
 

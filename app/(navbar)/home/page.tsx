@@ -10,6 +10,7 @@ import { fetchAllItems } from "../../actions/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import Cart from "./Cart";
 import { useParams, useSearchParams } from "next/navigation";
+import { useCart } from "@/lib/CartContext";
 
 type MenuItem = {
   available: boolean;
@@ -22,7 +23,7 @@ type MenuItem = {
   type: string;
 };
 
-type CartType = {
+export type CartType = {
   available: boolean;
   category: string;
   description: string;
@@ -36,11 +37,11 @@ type CartType = {
 
 type ItemsByCategory = Record<string, MenuItem[]>;
 function Home() {
-  const [cart, setCart] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [navbar, setNavbar] = useState("breakfast");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<CartType[]>([]);
+  const { cart, setCart } = useCart();
   const [items, setItems] = useState<ItemsByCategory>({});
 
   const [categories, setCategories] = useState<string[]>([]);
@@ -52,6 +53,7 @@ function Home() {
     const getItems = async () => {
       try {
         const items: MenuItem[] = await fetchAllItems();
+        items.filter((item)=>item.available);
         const itemsByCategory = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
           if (!acc[item.category]) {
             acc[item.category] = [];
@@ -80,7 +82,7 @@ function Home() {
       return;
     }
 
-    setCart(open);
+    setCartOpen(open);
   };
 
   const handleClick = (id: string) => {
@@ -94,7 +96,7 @@ function Home() {
   };
 
   const handleAddItem = (item: MenuItem) => {
-    setSelected((prevSelected) => {
+    setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevSelected.map((cartItem) =>
@@ -107,7 +109,7 @@ function Home() {
   };
 
   const handleRemoveItem = (item: MenuItem) => {
-    setSelected((prevSelected) => {
+    setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
         return prevSelected.map((cartItem) =>
@@ -123,15 +125,38 @@ function Home() {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const yOffset = window.pageYOffset + 128; // Adjusted offset to match the one used in handleClick
+      let currentCategory = categories[0];
+  
+      categories.forEach((category) => {
+        const section = document.getElementById(category);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          if (yOffset >= sectionTop) {
+            currentCategory = category;
+          }
+        }
+      });
+  
+      setNavbar(currentCategory);
+    };
+  
+    window.addEventListener("scroll", handleScroll);
+  
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [categories]);
+
   return (
     <div className=" font-montserrat">
       <div>
-        <SwipeableDrawer anchor={"bottom"} open={cart} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
+        <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
           <Cart
-            selected={selected}
-            cart={cart}
-            setCart={setCart}
-            setSelected={setSelected}
+            cartOpen={cartOpen}
+            setCartOpen={setCartOpen}
             expandedId={expandedId}
             toggleExpand={toggleExpand}
           />
@@ -145,7 +170,7 @@ function Home() {
             width={36}
             height={36}
             onClick={() => {
-              setCart(!cart);
+              setCartOpen(!cartOpen);
             }}
           />
           <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium  border-red-500"> Room: {room} </div>
@@ -177,7 +202,7 @@ function Home() {
             <div key={index} id={key} className=" px-3">
               <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
               {items[key].map((item) => {
-                const selectedItem = selected.find((cartItem) => cartItem.item_id === item.item_id);
+                const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
                 return (
                   <div key={item.item_id} className="p-2  border-b border-gray-300 border-dashed">
                     <div className="flex justify-between items-center">
@@ -245,16 +270,16 @@ function Home() {
           ))}
         </div>
       )}
-      {selected.length > 0 && (
+      {cart.length > 0 && (
         <div className="sticky bottom-20 rounded-2xl cursor-pointer z-50 bg-red-500 font-semibold text-center w-[95%] mx-auto text-white py-4">
           <div
             onClick={() => {
-              setCart(true);
+              setCartOpen(true);
             }}
           >
             <div className="flex justify-center items-center gap-x-2">
               <div>
-                {selected.length} item{selected.length > 1 && "s"} added
+                {cart.length} item{cart.length > 1 && "s"} added
               </div>
               <div className="-mt-[1px]">
                 <ArrowForward />

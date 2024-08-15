@@ -41,8 +41,8 @@ const Home: React.FC<HomePropsType> = ({ setPlaceOrderModal, location }) => {
           <ArrowBack />
         </Button>
       </div>
-      {step === 0 && <EnterEmail step={step} email={email} setEmail={setEmail} setStep={setStep} />}
-      {step === 1 && <VerifyOTP email={email} setPlaceOrderModal={setPlaceOrderModal} />}
+      {step === 0 && <EnterEmail setPlaceOrderModal={setPlaceOrderModal} step={step} email={email} setEmail={setEmail} setStep={setStep} />}
+      {/* {step === 1 && <VerifyOTP email={email} setPlaceOrderModal={setPlaceOrderModal} />} */}
     </div>
   );
 };

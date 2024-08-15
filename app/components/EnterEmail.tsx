@@ -5,44 +5,64 @@ import { fetchBookingByRoom, sendOTPByEmail } from "../actions/api";
 import { Backdrop, CircularProgress } from "@mui/material";
 import { Snackbar } from "@mui/joy";
 import { Close, Info } from "@mui/icons-material";
+import { setAuthCustomer } from "../actions/cookie";
+import { createToken } from "../actions/util";
+
+type Booking = {
+  booking_id: string;
+  checkin: string;
+  checkout: string;
+  guest_email: string;
+  remarks: string;
+  room: string;
+};
 
 function EnterEmail({
   step,
   setStep,
   email,
   setEmail,
+  setPlaceOrderModal,
 }: {
   step: number;
   setStep: React.Dispatch<SetStateAction<number>>;
   email: string;
   setEmail: React.Dispatch<SetStateAction<string>>;
+  setPlaceOrderModal: React.Dispatch<SetStateAction<boolean>>;
 }) {
   const params = useSearchParams();
   const room = params.get("room");
-  const [emails, setEmails] = useState<string[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(false);
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
+    const emails = bookings.map((booking: any) => booking.guest_email.toLowerCase());
     if (emails.includes(email)) {
-      setLoading(true);
-      try {
-        const res = await sendOTPByEmail(email);
-        setAlert(res);
-        console.log("response: ", res);
-        if (res.message === "OTP Sent Successfully") {
-          setStep(1);
-        }
-        setMessage(res.message);
-      } catch (error) {
-        console.log("error sending otp ", error);
+      const booking = bookings.find((booking) => booking.guest_email === email);
+      if (booking) {
+        const token = await createToken(booking, "2h");
+        setAuthCustomer(token);
+        setPlaceOrderModal(false);
       }
-      setLoading(false);
+      // setLoading(true);
+      // try {
+      //   const res = await sendOTPByEmail(email);
+      //   setAlert(res);
+      //   console.log("response: ", res);
+      //   if (res.message === "OTP Sent Successfully") {
+      //     setStep(1);
+      //   }
+      //   setMessage(res.message);
+      // } catch (error) {
+      //   console.log("error sending otp ", error);
+      // }
+      // setLoading(false);
     } else {
-      console.log(emails);
-      if (emails.length === 0) {
+      console.log(bookings);
+      if (bookings.length === 0) {
         setError("No active bookings found for this room");
       } else {
         setError("Email not found");
@@ -53,8 +73,9 @@ function EnterEmail({
   useEffect(() => {
     if (room) {
       fetchBookingByRoom(room).then((bookings) => {
-        const data = bookings.map((booking: any) => booking.guest_email.toLowerCase());
-        setEmails(data);
+        // const data = bookings.map((booking: any) => booking.guest_email.toLowerCase());
+        // console.log("data: ", bookings)
+        setBookings(bookings);
       });
     }
   }, []);
