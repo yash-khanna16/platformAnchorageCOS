@@ -12,6 +12,12 @@ export default async function middleware(req: NextRequest) {
   const roomParam = req.nextUrl.searchParams.get("room");  
 
   if (auth?.room) {
+    if (path === "/") {
+      const newUrl = new URL(req.nextUrl.origin + "/home");
+      newUrl.searchParams.set("room", auth.room as string);
+      return NextResponse.redirect(newUrl);
+    }
+
     if (!roomParam || roomParam !== auth.room) {
       const newUrl = new URL(req.nextUrl.toString());
       newUrl.searchParams.set("room", auth.room as string);
