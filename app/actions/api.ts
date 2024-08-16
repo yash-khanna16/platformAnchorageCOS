@@ -177,12 +177,37 @@ export async function fetchOrdersByBookingId(bookingId: string) {
 }
 export async function fetchSchedule(bookingId: string) {
   try {
-    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchOrdersByBookingId`, {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchSchedule`, {
       method: "GET",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
         bookingid:bookingId
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+export async function updateFeedback(rating: number, feedback: string, orderid: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/updateFeedback`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        orderid: orderid,
+        rating: rating.toString(),
+        feedback: feedback
       },
       cache: "no-cache",
     });

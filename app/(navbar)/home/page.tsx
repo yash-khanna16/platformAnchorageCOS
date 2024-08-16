@@ -9,7 +9,7 @@ import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import { fetchAllItems } from "../../actions/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import Cart from "./Cart";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
 
 type MenuItem = {
@@ -43,17 +43,26 @@ function Home() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { cart, setCart } = useCart();
   const [items, setItems] = useState<ItemsByCategory>({});
+  const [highlighted, setHighlighted] = useState("breakfast");
+  const [isClicked, setIsClicked] = useState(false);
 
   const [categories, setCategories] = useState<string[]>([]);
 
   const params = useSearchParams();
   const room = params.get("room");
+  const router = useRouter();
 
+  useEffect(() => {
+    if (!room) {
+      router.push("/not-found");
+      console.log("room: ", room);
+    }
+  }, [room]);
   useEffect(() => {
     const getItems = async () => {
       try {
         const items: MenuItem[] = await fetchAllItems();
-        items.filter((item)=>item.available);
+        items.filter((item) => item.available);
         const itemsByCategory = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
           if (!acc[item.category]) {
             acc[item.category] = [];
@@ -88,9 +97,8 @@ function Home() {
   const handleClick = (id: string) => {
     const section = document.getElementById(id);
     if (section) {
-      const yOffset = -128; // Offset value
+      const yOffset = -128;
       const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
@@ -127,24 +135,26 @@ function Home() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const yOffset = window.pageYOffset + 128; // Adjusted offset to match the one used in handleClick
-      let currentCategory = categories[0];
-  
-      categories.forEach((category) => {
-        const section = document.getElementById(category);
-        if (section) {
-          const sectionTop = section.offsetTop;
-          if (yOffset >= sectionTop) {
-            currentCategory = category;
+      if (isClicked) {
+        const yOffset = window.pageYOffset + 128; // Adjusted offset to match the one used in handleClick
+        let currentCategory = categories[0];
+
+        categories.forEach((category) => {
+          const section = document.getElementById(category);
+          if (section) {
+            const sectionTop = section.offsetTop;
+            if (yOffset >= sectionTop) {
+              currentCategory = category;
+            }
           }
-        }
-      });
-  
-      setNavbar(currentCategory);
+        });
+
+        setNavbar(currentCategory);
+      }
     };
-  
+
     window.addEventListener("scroll", handleScroll);
-  
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -154,12 +164,7 @@ function Home() {
     <div className=" font-montserrat">
       <div>
         <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
-          <Cart
-            cartOpen={cartOpen}
-            setCartOpen={setCartOpen}
-            expandedId={expandedId}
-            toggleExpand={toggleExpand}
-          />
+          <Cart cartOpen={cartOpen} setCartOpen={setCartOpen} expandedId={expandedId} toggleExpand={toggleExpand} />
         </SwipeableDrawer>
       </div>
       <div className="sticky top-0 z-10 bg-white   pb-4">
@@ -185,6 +190,10 @@ function Home() {
               onClick={() => {
                 setNavbar(element);
                 handleClick(element);
+                setIsClicked(true)
+                setTimeout(() => {
+                  setIsClicked(false);
+                }, 500);
               }}
             >
               {element}

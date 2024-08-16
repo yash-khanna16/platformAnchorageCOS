@@ -6,28 +6,49 @@ import LoginPage from "../../components/Login";
 import { CircularProgress } from "@mui/joy";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
-import { useSearchParams } from "next/navigation";
-import {
-  LocationOn,
-  NearMe,
-  Place,
-} from "@mui/icons-material";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LocationOn, NearMe, Place } from "@mui/icons-material";
+import { fetchSchedule } from "@/app/actions/api";
 
 type Event =
-  | { checkin: { Date: string; Time: string } }
-  | { movement: { Date: string; Time: string } }
-  | { checkOut: { Date: string; Time: string } };
+  | { checkin: { Date: string; pickupLocation: string } }
+  | { movement: { Date: string; pickupLocation: string; dropLocation: string } }
+  | { checkOut: { Date: string; pickupLocation: string } };
 
-const parseDateTime = (date: string, time: string): Date | null => {
-  try {
-    const [day, month, year] = date.split("-");
-    const formattedDate = `${year}-${month}-${day}`;
-    const dateTimeString = `${formattedDate}T${time}:00`;
-    return new Date(dateTimeString);
-  } catch (error) {
-    console.error("Error parsing date and time:", error);
-    return null;
-  }
+
+
+const convertToEventArray = (
+  arr: { dateTime: string; dropLocation: string; pickUpLocation: string; type: "Checkin" | "Movement" | "Checkout" }[]
+): Event[] => {
+  return arr.map((item) => {
+
+    switch (item.type) {
+      case "Checkin":
+        return {
+          checkin: {
+            Date: item.dateTime,
+            pickupLocation: item.pickUpLocation,
+          },
+        };
+      case "Movement":
+        return {
+          movement: {
+            Date: item.dateTime,
+            pickupLocation: item.pickUpLocation,
+            dropLocation: item.dropLocation,
+          },
+        };
+      case "Checkout":
+        return {
+          checkOut: {
+            Date: item.dateTime,
+            pickupLocation: item.pickUpLocation,
+          },
+        };
+      default:
+        throw new Error(`Unknown event type: ${item.type}`);
+    }
+  });
 };
 
 const formatDate = (date: Date): { date: string; time: string } => {
@@ -41,20 +62,7 @@ const formatDate = (date: Date): { date: string; time: string } => {
   hours = hours % 12 || 12; // Convert 24-hour format to 12-hour format
 
   // Array of short month names
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return {
     date: `${monthNames[date.getMonth()]} ${day}, ${year}`,
@@ -67,6 +75,17 @@ function Timeline() {
   const [skeleton, setSkeleton] = useState(false);
   const params = useSearchParams();
   const room = params.get("room");
+  const [scheduleData, setScheduleData] = useState<Event[]>([]);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!room) {
+      router.push("/not-found");
+      console.log("room: ", room);
+    }
+  }, [room]);
+
 
   const dataFetchedRef = useRef(false);
   useEffect(() => {
@@ -75,6 +94,8 @@ function Timeline() {
       if (auth && !dataFetchedRef.current) {
         dataFetchedRef.current = true;
         setSkeleton(false);
+        const res = await fetchSchedule(auth.booking_id as string);
+        setScheduleData(convertToEventArray(res));
         console.log(auth.bookingid);
       } else if (!auth) {
         setPlaceOrderModal(true);
@@ -90,6 +111,9 @@ function Timeline() {
       if (auth) {
         setSkeleton(false);
         setPlaceOrderModal(false);
+        const res = await fetchSchedule(auth.booking_id as string);
+        setScheduleData(convertToEventArray(res));
+        console.log("schedule: ", res);
       } else {
         setPlaceOrderModal(true);
       }
@@ -100,13 +124,6 @@ function Timeline() {
     }
   }, [placeOrderModal]);
 
-  const data: Event[] = [
-    { checkin: { Date: "11-08-2024", Time: "04:45" } },
-    { movement: { Date: "11-08-2024", Time: "23:45" } },
-    { movement: { Date: "13-08-2024", Time: "14:45" } },
-    { checkOut: { Date: "13-08-2024", Time: "22:45" } },
-  ];
-
   const currentTime = new Date();
 
   return (
@@ -114,27 +131,28 @@ function Timeline() {
       <div className="sticky top-0 z-50 bg-white shadow-lg ">
         <div className="flex justify-between mb-1 pt-4 p-2 items-center">
           <Image src={Logo} alt="Logo" width={36} height={36} />
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
-            Room: {room}
-          </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">Room: {room}</div>
         </div>
       </div>
       {!skeleton ? (
         <>
           <div className="py-2 px-5 text-gray-800 text-2xl font-medium mt-4 mb-2">Schedule</div>
           <div className="px-5">
-            {data.map((event, index) => {
+            {scheduleData.map((event, index) => {
               let eventDateTime: Date | null = null;
               let eventLabel = "";
-
+              let pickupLocation = "", dropLocation = ""
+              console.log("event: ", event)
               if ("checkin" in event) {
-                eventDateTime = parseDateTime(event.checkin.Date, event.checkin.Time);
+                eventDateTime = new Date(event.checkin.Date);
                 eventLabel = "Check In";
               } else if ("movement" in event) {
-                eventDateTime = parseDateTime(event.movement.Date, event.movement.Time);
+                pickupLocation = event.movement.pickupLocation;
+                dropLocation = event.movement.dropLocation;
+                eventDateTime = new Date(event.movement.Date);
                 eventLabel = "Trip";
               } else if ("checkOut" in event) {
-                eventDateTime = parseDateTime(event.checkOut.Date, event.checkOut.Time);
+                eventDateTime = new Date(event.checkOut.Date);
                 eventLabel = "Check Out";
               }
               const isValidDate = eventDateTime !== null && !isNaN(eventDateTime.getTime());
@@ -150,9 +168,7 @@ function Timeline() {
                       {isValidDate && eventDateTime && currentTime > eventDateTime ? (
                         <>
                           <div className="border-[#18C09C] bg-[#18C09C] text-white  border-2 w-7 h-7 rounded-full flex items-center justify-center p-1">
-                            <span className=" text-center text-sm font-semibold ">
-                              {eventDateTime.getDate()}
-                            </span>
+                            <span className=" text-center text-sm font-semibold ">{eventDateTime.getDate()}</span>
                           </div>
                           <div className="h-[1px] w-[25px] rounded-full ml-1 bg-[#18C09C]"></div>
                         </>
@@ -160,9 +176,7 @@ function Timeline() {
                         <>
                           <div className=" border-[#62AFFF] bg-[#62AFFF] text-white  border-2 w-7 h-7 rounded-full flex items-center justify-center p-1">
                             {eventDateTime ? (
-                              <span className=" text-center text-sm font-semibold  ">
-                                {eventDateTime.getDate()}
-                              </span>
+                              <span className=" text-center text-sm font-semibold  ">{eventDateTime.getDate()}</span>
                             ) : (
                               <span></span>
                             )}
@@ -172,7 +186,7 @@ function Timeline() {
                       )}
                     </div>
                     <div className="h-[75%]">
-                      {index < data.length - 1 ? (
+                      {index < scheduleData.length - 1 ? (
                         eventDateTime && currentTime > eventDateTime ? (
                           <div className="w-[3px] h-full rounded-full ml-3  bg-[#18C09C]"></div>
                         ) : (
@@ -186,14 +200,10 @@ function Timeline() {
                       <div className="w-full">
                         <div className="text-sm pt-2 mb-2 flex justify-between">
                           <span className="font-semibold">
-                            {isValidDate && eventDateTime
-                              ? formatDate(eventDateTime).time
-                              : "Invalid Time"}
+                            {isValidDate && eventDateTime ? formatDate(eventDateTime).time : "Invalid Time"}
                           </span>
                           <div className="text-gray-800 ">
-                            {isValidDate && eventDateTime
-                              ? formatDate(eventDateTime).date
-                              : "Invalid Time"}
+                            {isValidDate && eventDateTime ? formatDate(eventDateTime).date : "Invalid Time"}
                           </div>
                         </div>
                         <div className="text-lg mb-3 py-2 font-medium flex items-center ">
@@ -221,11 +231,11 @@ function Timeline() {
                           ) : (
                             <div className="flex justify-between items-center w-full pr-2">
                               <div className="flex items-center">
-                                <Place className="text-[15px] mr-1" /> Anchorage
+                                <Place className="text-[15px] mr-1" /> {pickupLocation}
                               </div>
                               <div className="flex items-center">
                                 <NearMe className="text-[15px] mr-1" />
-                                Airport
+                                {dropLocation}
                               </div>
                             </div>
                           )}

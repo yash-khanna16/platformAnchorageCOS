@@ -1,4 +1,4 @@
-function Schedule({selected}:{selected:Number}) {
+function Schedule({selected}:{selected:boolean}) {
   return (
     <svg
       version="1.1"

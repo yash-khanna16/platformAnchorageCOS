@@ -15,7 +15,6 @@ export async function parseJwt(token: string | undefined) {
 }
 
 export async function validate(token: string | undefined) {
-    console.log("1",process.env.Secret_Key)
     if (!token || token === undefined) { return; }
     try {
         const secret = new TextEncoder().encode(process.env.Secret_Key);

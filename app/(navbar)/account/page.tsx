@@ -3,14 +3,14 @@ import React, { useEffect, useState, useRef } from "react";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { SwipeableDrawer } from "@mui/material";
 import LoginPage from "../../components/Login";
-import { fetchBookingData, fetchOrdersByBookingId } from "@/app/actions/api";
+import { fetchBookingData, fetchOrdersByBookingId, updateFeedback } from "@/app/actions/api";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CircularProgress } from "@mui/joy";
+import { CircularProgress, Snackbar } from "@mui/joy";
 import veg from "@/app/assets/veg.png";
 import nonveg from "@/app/assets/nonveg.png";
-import { ArrowBackIosNew, Check, CheckCircle, Star } from "@mui/icons-material";
+import { ArrowBackIosNew, Check, CheckCircle, Close, Info, Star } from "@mui/icons-material";
 import { Textarea } from "@headlessui/react";
 import Lottie from "lottie-web";
 import { useCart } from "@/lib/CartContext";
@@ -25,6 +25,8 @@ type OrderType = {
   orderId: string;
   orderedOn: string;
   orderStatus: string;
+  feedback: string | null;
+  rating: number;
   items: {
     itemDescription: string;
     itemId: string;
@@ -51,12 +53,22 @@ function Account() {
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const { cart, setCart } = useCart();
+  const [alert, setAlert] = useState(false);
+  const [message, setMessage] = useState("");
+  const [reload, setReload] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!room) {
+      router.push("/not-found");
+      console.log("room: ", room);
+    }
+  }, [room]);
 
   const handleReorder = (order: OrderType) => {
     const itemsToAdd = order.items.map((item) => ({
       available: true,
-      category: '',
+      category: "",
       description: item.itemDescription,
       item_id: item.itemId,
       name: item.itemName,
@@ -66,12 +78,11 @@ function Account() {
       quantity: item.itemQty,
     }));
     console.log("items to add: ", itemsToAdd);
-  
+
     setCart((prevCart) => [...itemsToAdd]);
-  
-    router.push(`/?room=${room}`);
+
+    router.push(`/home?room=${room}`);
   };
-  
 
   const star = (
     <svg xmlns="http://www.w3.org/2000/svg" fill="#f3d00c" width={50} height={50} viewBox="0 0 576 512">
@@ -102,7 +113,7 @@ function Account() {
     };
 
     fetchAuthCustomer();
-  }, []);
+  }, [reload]);
 
   const chef = useRef(null);
 
@@ -228,16 +239,20 @@ function Account() {
                       </div>
                     </div>
                     <div className="flex w-full mt-4 space-x-3 ">
-                      <button onClick={() => handleReorder(order)} className="w-full bg-red-500 text-white py-2 rounded-xl ">Reorder</button>
-                      <button
-                        onClick={() => {
-                          setReview(true);
-                          setReviewId(order.orderId);
-                        }}
-                        className="w-full border-red-500 border text-red-500 bg-white py-2 rounded-xl "
-                      >
-                        Rate order
+                      <button onClick={() => handleReorder(order)} className="w-full bg-red-500 text-white py-2 rounded-xl ">
+                        Reorder
                       </button>
+                      {order.rating === -1 && (
+                        <button
+                          onClick={() => {
+                            setReview(true);
+                            setReviewId(order.orderId);
+                          }}
+                          className="w-full border-red-500 border text-red-500 bg-white py-2 rounded-xl "
+                        >
+                          Rate order
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -311,10 +326,17 @@ function Account() {
               </div>
               <form
                 className="space-y-5"
-                onSubmit={(e) => {
+                onSubmit={async(e) => {
                   e.preventDefault();
                   console.log(`response rating: ${rating} comment: ${comment} for id: ${reviewId}`);
-                  setSubmitted(true);
+                  try {
+                    await updateFeedback(rating, comment, reviewId)
+                    setReload(!reload)
+                    setSubmitted(true);
+                  } catch(error) {
+                    setAlert(true)
+                    setMessage("Something went wrong")
+                  }
                 }}
               >
                 {rating > 0 && (
@@ -351,6 +373,7 @@ function Account() {
                   setComment("");
                   setReview(false);
                   setSubmitted(false);
+                  window.location.reload();
                 }}
               >
                 Done
@@ -359,6 +382,24 @@ function Account() {
           )}
         </div>
       </SwipeableDrawer>
+      <Snackbar
+        open={alert}
+        autoHideDuration={5000}
+        // color="danger"
+        onClose={() => {
+          setAlert(false);
+        }}
+      >
+        <div className="flex justify-between w-full">
+          <div>
+            <Info />
+            {message}
+          </div>
+          <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
+            <Close />
+          </div>
+        </div>
+      </Snackbar>
     </div>
   );
 }

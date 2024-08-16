@@ -19,7 +19,7 @@ function Navbar() {
       url: "/home",
     },
     {
-      icon: <Schedule  selected={selected} />,
+      icon: <Schedule  selected={selected===1} />,
       title: "Schedule",
       url: "/timeline",
     },
