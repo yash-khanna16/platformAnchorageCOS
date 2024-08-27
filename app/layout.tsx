@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import favicon from "@/app/favicon.png";
+import { GoogleAnalytics } from '@next/third-parties/google'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,22 +26,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
           rel="stylesheet"
         />
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-5XLZK2PKC8"></Script>
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-                        declare global {
-                            interface Window { dataLayer: any[]; }
-                        }
-                        window.dataLayer = window.dataLayer || [];
-                        function gtag(){window.dataLayer.push(arguments);}
-                        gtag('js', new Date());
-
-                        gtag('config', 'G-5XLZK2PKC8');
-                    `}
-        </Script>
+        
       </head>
       <body className={inter.className}>
         {children}
+        <GoogleAnalytics gaId="G-5XLZK2PKC8" />
       </body>
     </html>
   );
