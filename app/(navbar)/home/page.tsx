@@ -23,19 +23,10 @@ type MenuItem = {
   type: string;
 };
 
-export type CartType = {
-  available: boolean;
-  category: string;
-  description: string;
-  item_id: string;
-  name: string;
-  price: number;
-  time_to_prepare: number;
-  type: string;
-  quantity: number;
-};
+export type CartType = MenuItem & { quantity: number };
 
 type ItemsByCategory = Record<string, MenuItem[]>;
+
 function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -45,7 +36,7 @@ function Home() {
   const [items, setItems] = useState<ItemsByCategory>({});
   const [highlighted, setHighlighted] = useState("breakfast");
   const [isClicked, setIsClicked] = useState(false);
-
+  const sectionIds = ["breakfast", "lunch", "dinner", "appetizers", "starters", "beverages"];
   const [categories, setCategories] = useState<string[]>([]);
 
   const params = useSearchParams();
@@ -57,13 +48,14 @@ function Home() {
       router.push("/not-found");
       console.log("room: ", room);
     }
-  }, [room]);
+  }, [room, router]);
+
   useEffect(() => {
     const getItems = async () => {
       try {
-        const items: MenuItem[] = await fetchAllItems();
-        items.filter((item) => item.available);
-        const itemsByCategory = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
+        const fetchedItems: MenuItem[] = await fetchAllItems();
+        const availableItems = fetchedItems.filter((item) => item.available);
+        const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
           if (!acc[item.category]) {
             acc[item.category] = [];
           }
@@ -99,7 +91,7 @@ function Home() {
     if (section) {
       const yOffset = -128;
       const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      window.scrollTo({ top: y});
     }
   };
 
@@ -133,6 +125,40 @@ function Home() {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  // useEffect(() => {
+  //   const observerOptions = {
+  //     root: null,
+  //     rootMargin: "0px",
+  //     threshold: 0.5,
+  //   };
+  
+  //   const observerCallback = (entries: IntersectionObserverEntry[]) => {
+  //     entries.forEach((entry) => {
+  //       if (entry.isIntersecting) {
+  //         setNavbar(entry.target.id);
+  //       }
+  //     });
+  //   };
+  
+  //   const observer = new IntersectionObserver(observerCallback, observerOptions);
+  
+  //   sectionIds.forEach((id) => {
+  //     const section = document.getElementById(id);
+  //     if (section) {
+  //       observer.observe(section);
+  //     }
+  //   });
+  
+  //   return () => {
+  //     sectionIds.forEach((id) => {
+  //       const section = document.getElementById(id);
+  //       if (section) {
+  //         observer.unobserve(section);
+  //       }
+  //     });
+  //   };
+  // }, [sectionIds]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (isClicked) {
@@ -159,15 +185,16 @@ function Home() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [categories]);
+  
 
   return (
-    <div className=" font-montserrat">
+    <div className="font-montserrat">
       <div>
         <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
           <Cart cartOpen={cartOpen} setCartOpen={setCartOpen} expandedId={expandedId} toggleExpand={toggleExpand} />
         </SwipeableDrawer>
       </div>
-      <div className="sticky top-0 z-10 bg-white   pb-4">
+      <div className="sticky top-0 z-10 bg-white pb-4">
         <div className="flex justify-between mb-1 py-4 p-2 items-center">
           <Image
             src={Logo}
@@ -178,7 +205,7 @@ function Home() {
               setCartOpen(!cartOpen);
             }}
           />
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium  border-red-500"> Room: {room} </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
         </div>
         <div className="text-sm flex space-x-3 overflow-scroll hide-scrollbar font-medium px-2 text-gray-600">
           {categories.map((element, index) => (
@@ -186,11 +213,11 @@ function Home() {
               key={index}
               className={`${
                 navbar === element ? "text-red-600 border-red-400" : ""
-              } capitalize border px-3 py-1 rounded-2xl   cursor-pointer`}
+              } capitalize border px-3 py-1 rounded-2xl cursor-pointer`}
               onClick={() => {
                 setNavbar(element);
                 handleClick(element);
-                setIsClicked(true)
+                setIsClicked(true);
                 setTimeout(() => {
                   setIsClicked(false);
                 }, 500);
@@ -201,19 +228,19 @@ function Home() {
           ))}
         </div>
       </div>
-      {loading === true ? (
+      {loading ? (
         <div className="h-screen flex justify-center items-center">
           <CircularProgress />
         </div>
       ) : (
         <div className="">
-          {Object.keys(items).map((key, index: number) => (
-            <div key={index} id={key} className=" px-3">
+          {Object.keys(items).map((key, index) => (
+            <div key={index} id={key} className="px-3">
               <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
               {items[key].map((item) => {
                 const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
                 return (
-                  <div key={item.item_id} className="p-2  border-b border-gray-300 border-dashed">
+                  <div key={item.item_id} className="p-2 border-b border-gray-300 border-dashed">
                     <div className="flex justify-between items-center">
                       <div className="my-2">
                         <div className="inline">
@@ -240,7 +267,10 @@ function Home() {
                               {item.description.split(" ").slice(0, 15).join(" ")}
                               {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                               {item.description.split(" ").length > 10 && (
-                                <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                                <button
+                                  className="font-medium text-red-500 text-xs"
+                                  onClick={() => toggleExpand(item.item_id)}
+                                >
                                   read more
                                 </button>
                               )}
@@ -250,7 +280,7 @@ function Home() {
                       </div>
                       <div className="font-medium ml-3 mt-1">
                         {selectedItem ? (
-                          <div className="relative border-red-500 border w-24  py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                          <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
                             <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
                               <Remove fontSize="small" />
                             </button>
@@ -262,12 +292,9 @@ function Home() {
                         ) : (
                           <button
                             onClick={() => handleAddItem(item)}
-                            className="relative border-red-500 border w-24  py-2 px-5 text-red-500 rounded-lg bg-red-50"
+                            className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
                           >
                             ADD
-                            {/* <div className="absolute -top-1 right-0">
-                              <Add className="scale-[60%]" />
-                            </div> */}
                           </button>
                         )}
                       </div>
