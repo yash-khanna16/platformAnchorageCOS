@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Modal, ModalClose, ModalDialog, DialogContent } from "@mui/joy";
 import { CheckCircle } from "@mui/icons-material";
 import { useCart } from "@/lib/CartContext";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type DataType = {
   available: boolean;
@@ -49,6 +50,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const { cart, setCart } = useCart();
   const router = useRouter();
   const handlePlaceOrder = async () => {
+    
     const auth = await getAuthCustomer();
     if (auth) {
       try {
@@ -65,6 +67,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           status: "Placed",
           items: items,
         };
+        sendGAEvent('event', 'placedOrder', { value: dataSend })
         console.log(dataSend);
         const result = await placeOrder(dataSend);
         console.log(result);
