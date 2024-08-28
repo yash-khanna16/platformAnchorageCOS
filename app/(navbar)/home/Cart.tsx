@@ -13,6 +13,7 @@ import { useCart } from "@/lib/CartContext";
 import Lottie from "lottie-react";
 import animationData from "../../assets/tick.json";
 import { CircularProgress } from "@mui/joy";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type DataType = {
   available: boolean;
@@ -71,6 +72,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           status: "Placed",
           items: items,
         };
+        sendGAEvent('event', 'placedOrder', { value: dataSend })
         console.log(dataSend);
         const result = await placeOrder(dataSend);
         console.log(result);
