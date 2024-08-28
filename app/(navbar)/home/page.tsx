@@ -16,7 +16,7 @@ import { starSmall, starUnfilledSmall } from "@/app/assets/icons";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { BookingInfoType } from "../timeline/page";
 import Lottie from "lottie-react";
-import animationdata from "@/app/assets/happy.json"
+import animationdata from "@/app/assets/happy.json";
 
 type MenuItem = {
   available: boolean;
@@ -59,9 +59,9 @@ function Home() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
 
-  useEffect (() => {
+  useEffect(() => {
     const fetchUser = async () => {
-      console.log("here: ")
+      console.log("here: ");
       const auth = (await getAuthCustomer()) as BookingInfoType;
       if (auth) {
         const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
@@ -71,11 +71,11 @@ function Home() {
           rating: number;
           type: string;
         }[];
-        const orders = await fetchOrdersByBookingId(auth.booking_id as string)
-        console.log("orders: ", orders)
-        console.log("feedback: ", feedback)
-        if (!feedback.some((f) => f.type === "cos") && orders.length > 0 ) {
-          console.log("here")
+        const orders = await fetchOrdersByBookingId(auth.booking_id as string);
+        console.log("orders: ", orders);
+        console.log("feedback: ", feedback);
+        if (!feedback.some((f) => f.type === "cos") && orders.length > 0) {
+          console.log("here");
           const lastClosed = localStorage.getItem("cosFeedbackLastClosed");
           if (!lastClosed) {
             // if page is opened for first time, then add delay of 15 seconds
@@ -88,11 +88,10 @@ function Home() {
           }
         }
       }
-    }
+    };
 
     fetchUser();
-
-  },[])
+  }, []);
 
   useEffect(() => {
     if (!room) {
@@ -140,9 +139,9 @@ function Home() {
   const handleClick = (id: string) => {
     const section = document.getElementById(id);
     if (section) {
-      const yOffset = -128;
+      const yOffset = -125;
       const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y});
+      window.scrollTo({ top: y });
     }
   };
 
@@ -182,7 +181,7 @@ function Home() {
   //     rootMargin: "0px",
   //     threshold: 0.5,
   //   };
-  
+
   //   const observerCallback = (entries: IntersectionObserverEntry[]) => {
   //     entries.forEach((entry) => {
   //       if (entry.isIntersecting) {
@@ -190,16 +189,16 @@ function Home() {
   //       }
   //     });
   //   };
-  
+
   //   const observer = new IntersectionObserver(observerCallback, observerOptions);
-  
+
   //   sectionIds.forEach((id) => {
   //     const section = document.getElementById(id);
   //     if (section) {
   //       observer.observe(section);
   //     }
   //   });
-  
+
   //   return () => {
   //     sectionIds.forEach((id) => {
   //       const section = document.getElementById(id);
@@ -212,22 +211,20 @@ function Home() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (isClicked) {
-        const yOffset = window.pageYOffset + 128; // Adjusted offset to match the one used in handleClick
-        let currentCategory = categories[0];
+      const yOffset = window.pageYOffset + 128; // Adjusted offset to match the one used in handleClick
+      let currentCategory = categories[0];
 
-        categories.forEach((category) => {
-          const section = document.getElementById(category);
-          if (section) {
-            const sectionTop = section.offsetTop;
-            if (yOffset >= sectionTop) {
-              currentCategory = category;
-            }
+      categories.forEach((category) => {
+        const section = document.getElementById(category);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          if (yOffset >= sectionTop) {
+            currentCategory = category;
           }
-        });
+        }
+      });
 
-        setNavbar(currentCategory);
-      }
+      setNavbar(currentCategory);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -236,7 +233,6 @@ function Home() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [categories]);
-  
 
   return (
     <div className="font-montserrat">
@@ -268,10 +264,10 @@ function Home() {
               onClick={() => {
                 setNavbar(element);
                 handleClick(element);
-                setIsClicked(true);
-                setTimeout(() => {
-                  setIsClicked(false);
-                }, 500);
+                // setIsClicked(true);
+                // setTimeout(() => {
+                //   setIsClicked(false);
+                // }, 500);
               }}
             >
               {element}
@@ -318,10 +314,7 @@ function Home() {
                               {item.description.split(" ").slice(0, 15).join(" ")}
                               {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                               {item.description.split(" ").length > 10 && (
-                                <button
-                                  className="font-medium text-red-500 text-xs"
-                                  onClick={() => toggleExpand(item.item_id)}
-                                >
+                                <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                                   read more
                                 </button>
                               )}
@@ -375,7 +368,7 @@ function Home() {
           </div>
         </div>
       )}
-            <Modal
+      <Modal
         open={feedback}
         onClose={() => {
           localStorage.setItem("cosFeedbackLastClosed", Date.now().toString());
