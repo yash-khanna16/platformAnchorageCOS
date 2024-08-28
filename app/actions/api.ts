@@ -223,3 +223,49 @@ export async function updateFeedback(rating: number, feedback: string, orderid: 
     throw error;
   }
 }
+export async function fetchFeedbackCOS(booking_id: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        bookingid: booking_id
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+export async function insertFeedbackCOS(type: string, booking_id: string,rating: number, comment: string ) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/insertFeedbackCOS`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({type: type, bookingid: booking_id, rating: rating, comment: comment}),
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}

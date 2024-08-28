@@ -1,16 +1,22 @@
 "use client";
-import { Add, ArrowForward, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
+import { Add, ArrowForward, Close, CurrencyRupee, Info, Remove, ShoppingCart } from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import Veg from "../../assets/veg.png";
 import Nonveg from "../../assets/nonveg.png";
 import React, { useEffect, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import { fetchAllItems } from "../../actions/api";
+import { fetchAllItems, fetchFeedbackCOS, fetchOrdersByBookingId, insertFeedbackCOS } from "../../actions/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import Cart from "./Cart";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
+import { DialogContent, DialogTitle, Modal, ModalClose, ModalDialog, Snackbar } from "@mui/joy";
+import { starSmall, starUnfilledSmall } from "@/app/assets/icons";
+import { getAuthCustomer } from "@/app/actions/cookie";
+import { BookingInfoType } from "../timeline/page";
+import Lottie from "lottie-react";
+import animationdata from "@/app/assets/happy.json"
 
 type MenuItem = {
   available: boolean;
@@ -45,12 +51,57 @@ function Home() {
   const [items, setItems] = useState<ItemsByCategory>({});
   const [highlighted, setHighlighted] = useState("breakfast");
   const [isClicked, setIsClicked] = useState(false);
+  const [feedback, setFeedback] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [alert, setAlert] = useState(false);
+  const [message, setMessage] = useState("");
 
   const [categories, setCategories] = useState<string[]>([]);
 
   const params = useSearchParams();
   const room = params.get("room");
   const router = useRouter();
+
+  const delay = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
+
+  useEffect (() => {
+    const fetchUser = async () => {
+      console.log("here: ")
+      const auth = (await getAuthCustomer()) as BookingInfoType;
+      if (auth) {
+        const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
+          booking_id: string;
+          comment: string;
+          last_modified: string;
+          rating: number;
+          type: string;
+        }[];
+        const orders = await fetchOrdersByBookingId(auth.booking_id as string)
+        console.log("orders: ", orders)
+        console.log("feedback: ", feedback)
+        if (!feedback.some((f) => f.type === "cos") && orders.length > 0 ) {
+          console.log("here")
+          const lastClosed = localStorage.getItem("cosFeedbackLastClosed");
+          if (!lastClosed) {
+            // if page is opened for first time, then add delay of 15 seconds
+            delay(6000).then(() => {
+              setFeedback(true);
+            });
+          } else {
+            const shouldShowModal = Date.now() - parseInt(lastClosed) > 2 * 60 * 60 * 1000; // 2 hours
+            if (shouldShowModal) setFeedback(true);
+          }
+        }
+      }
+    }
+
+    fetchUser();
+
+  },[])
 
   useEffect(() => {
     if (!room) {
@@ -297,6 +348,120 @@ function Home() {
           </div>
         </div>
       )}
+            <Modal
+        open={feedback}
+        onClose={() => {
+          localStorage.setItem("cosFeedbackLastClosed", Date.now().toString());
+          console.log("here");
+          setFeedback(false);
+        }}
+      >
+        <ModalDialog
+          sx={{
+            width: "90vw",
+            borderRadius: "20px",
+            overflow: "hidden",
+          }}
+          style={{ width: "90vw" }}
+        >
+          <DialogTitle>How Was Your Ordering Experience?</DialogTitle>
+          <ModalClose style={{ zIndex: "10" }} />
+          <DialogContent className="h-fit">
+            {!submitted && (
+              <>
+                <div>Did everything go smoothly with your order? Please rate your experience or share a suggestion</div>
+                <div className="my-4">
+                  <div className="flex space-x-3 justify-center py-4 text-lg ">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => setRating(value)} // Set the rating state
+                      >
+                        {value <= rating ? starSmall : starUnfilledSmall}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="space-y-5 my-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      localStorage.setItem("cosFeedbackLastClosed", Date.now().toString());
+                      console.log(`response rating: ${rating} comment: ${comment} for cos`);
+                      try {
+                        const user = (await getAuthCustomer()) as BookingInfoType;
+                        if (user) {
+                          console.log("user: ", user);
+                          await insertFeedbackCOS("cos", user?.booking_id, rating, comment);
+                          setSubmitted(true);
+                        }
+                      } catch (error) {
+                        setAlert(true);
+                        setMessage("Something went wrong");
+                      }
+                    }}
+                  >
+                    {rating > 0 && (
+                      <textarea
+                        rows={5}
+                        value={comment}
+                        onChange={(e) => {
+                          setComment(e.target.value);
+                        }}
+                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
+                        placeholder="Leave a comment..."
+                      />
+                    )}
+                    {rating > 0 && (
+                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
+                        Submit
+                      </button>
+                    )}
+                  </form>
+                </div>
+              </>
+            )}
+            {submitted && (
+              <div className="">
+                <Lottie className="h-[200px] my-auto " animationData={animationdata} loop={false} />
+
+                <div className="text-center text-gray-600 text-lg font-medium">
+                  <div>Your feedback helps us improve.</div>
+                  <div>Thank you!</div>
+                </div>
+                <button
+                  className="p-3 my-6 bg-red-500 text-white rounded-2xl w-full"
+                  onClick={() => {
+                    setRating(0);
+                    setComment("");
+                    setSubmitted(false);
+                    setFeedback(false);
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+      <Snackbar
+        open={alert}
+        autoHideDuration={5000}
+        // color="danger"
+        onClose={() => {
+          setAlert(false);
+        }}
+      >
+        <div className="flex justify-between w-full">
+          <div>
+            <Info />
+            {message}
+          </div>
+          <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
+            <Close />
+          </div>
+        </div>
+      </Snackbar>
     </div>
   );
 }

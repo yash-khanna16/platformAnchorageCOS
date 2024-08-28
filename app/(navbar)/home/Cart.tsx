@@ -1,7 +1,7 @@
 import { Add, ArrowForward, Cancel, CancelRounded, Close, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import LoginPage from "../../components/Login";
 import { getAuthCustomer } from "@/app/actions/cookie";
@@ -10,6 +10,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Modal, ModalClose, ModalDialog, DialogContent } from "@mui/joy";
 import { CheckCircle } from "@mui/icons-material";
 import { useCart } from "@/lib/CartContext";
+import Lottie from "lottie-react";
+import animationData from "../../assets/tick.json";
+import { CircularProgress } from "@mui/joy";
 
 type DataType = {
   available: boolean;
@@ -43,12 +46,15 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [confirmModal, setConfirmModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [timeToPrepare, setTimeToPrepare] = useState(0);
-  const [notAvailable, setNotAvailable] = useState<{item_id: string, name: string, available: boolean}[]>([])
+  const [notAvailable, setNotAvailable] = useState<{ item_id: string; name: string; available: boolean }[]>([]);
+  const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const searchParams = useSearchParams();
   const { cart, setCart } = useCart();
   const router = useRouter();
+
   const handlePlaceOrder = async () => {
+    setLoading(true);
     const auth = await getAuthCustomer();
     if (auth) {
       try {
@@ -75,16 +81,20 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           });
           setTimeToPrepare(time_to_prepare);
           setConfirmModal(true);
+          setLoading(false);
         } else if (result.status === 401) {
           console.log("Can't place order, following items not available: ", result.data.notAvailable);
           setNotAvailable(result.data.notAvailable);
           setErrorModal(true);
+          setLoading(false);
         }
       } catch (error) {
         console.log("Something went wrong,", error);
+        setLoading(false);
       }
     } else {
       setPlaceOrderModal(true);
+      setLoading(false);
     }
   };
 
@@ -205,12 +215,14 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           <span>Total :</span>
           <span>₹ {total}</span>
         </div>
+
         <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full">
           {placeOrderError && (
             <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
           )}
           <button
-            className="p-3 border text-xl font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
+            disabled={loading}
+            className="p-3 border disabled:bg-opacity-90 text-xl flex items-center justify-center gap-x-3 font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
             onClick={() => {
               if (cart.length > 0) {
                 handlePlaceOrder();
@@ -219,7 +231,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               }
             }}
           >
-            Place Order
+            {loading && <CircularProgress color="danger" size="sm" />}
+            <div>Place Order</div>
           </button>
         </div>
       </div>
@@ -288,23 +301,33 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           setConfirmModal(false);
           setCart([]);
           const query = searchParams.toString();
-          const newUrl = query ? `/account?${query}` : '/account';
+          const newUrl = query ? `/account?${query}` : "/account";
           router.push(newUrl);
-          
         }}
       >
         <ModalDialog style={{ width: "90vw" }}>
           <ModalClose style={{ zIndex: "10" }} />
           <DialogContent className="h-fit">
             <div className="flex flex-col h-32 items-center overflow-hidden ">
-              <CheckCircle className="h-20 scale-[300%] text-green-600" />
-              <div className="font-semibold text-2xl text-center">Order Placed Successfully!</div>
+              <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
             </div>
-            <div className="flex text-lg font-medium justify-between">
-              <div>Expected Waiting Time:</div>
-              <div>{timeToPrepare} mins</div>
+            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">Your Order has been placed!</div>
+            <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
+              Expected Waiting Time {timeToPrepare} mins
             </div>
-            <div className="flex justify-between">
+            <button
+              onClick={() => {
+                setConfirmModal(false);
+                setCart([]);
+                const query = searchParams.toString();
+                const newUrl = query ? `/account?${query}` : "/account";
+                router.push(newUrl);
+              }}
+              className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
+            >
+              CONTINUE SHOPPING <ArrowForward />
+            </button>
+            {/* <div className="flex justify-between">
               <div className=" capitalize">Item</div>
               <div>Qty</div>
             </div>
@@ -313,7 +336,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 <div className=" capitalize">{item.name}</div>
                 <div className="mr-2">{item.quantity}</div>
               </div>
-            ))}
+            ))} */}
           </DialogContent>
         </ModalDialog>
       </Modal>
@@ -340,7 +363,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             {notAvailable.map((item_not_available, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item_not_available.name}</div>
-                <div className="mr-2">{cart.find((item)=> item.item_id === item_not_available.item_id)?.quantity}</div>
+                <div className="mr-2">{cart.find((item) => item.item_id === item_not_available.item_id)?.quantity}</div>
               </div>
             ))}
             <div className="mt-6 text-sm">Please try removing the above items and try again</div>
