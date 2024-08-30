@@ -87,7 +87,7 @@ const formatDate = (date: Date): { date: string; time: string } => {
 
 function Timeline() {
   const [placeOrderModal, setPlaceOrderModal] = useState(false);
-  const [skeleton, setSkeleton] = useState(false);
+  const [skeleton, setSkeleton] = useState(true);
   const params = useSearchParams();
   const room = params.get("room");
   const [scheduleData, setScheduleData] = useState<Event[]>([]);
@@ -189,7 +189,7 @@ function Timeline() {
   const currentTime = new Date();
 
   return (
-    <div className="font-montserrat bg-[#FBFAFF] max-h-full">
+    <div className="font-montserrat bg-[#FBFAFF] min-h-[95vh]">
       <div className="sticky top-0 z-50 bg-white shadow-lg ">
         <div className="flex justify-between mb-1 pt-4 p-2 items-center">
           <Image src={Logo} alt="Logo" width={36} height={36} />

@@ -322,12 +322,12 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 setConfirmModal(false);
                 setCart([]);
                 const query = searchParams.toString();
-                const newUrl = query ? `/account?${query}` : "/account";
+                const newUrl = query ? `/timeline?${query}` : "/timeline";
                 router.push(newUrl);
               }}
               className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
             >
-              CONTINUE SHOPPING <ArrowForward />
+              Explore Journey<ArrowForward />
             </button>
             {/* <div className="flex justify-between">
               <div className=" capitalize">Item</div>

@@ -389,13 +389,14 @@ function Account() {
               </div>
             )}
           </div>
-          <div className="mb-4 mt-20 mx-3 text-xs font-medium  text-red-500">YOUR ORDERS</div>
+          <div className="pb-4 mt-4 mx-3 text-xs font-medium  text-red-500">YOUR ORDERS</div>
+          <div className="bg-white pt-5">
           {categories.map((element, index) => (
             <span
               key={index}
               className={`${
                 selected === element ? "text-red-600 border-red-400" : ""
-              } capitalize border-b-2 font-medium  mx-3 cursor-pointer`}
+              } capitalize border-b-2  bg-white font-medium  mx-3 cursor-pointer`}
               onClick={() => {
                 setSelected(element);
               }}
@@ -403,16 +404,17 @@ function Account() {
               {element}
             </span>
           ))}
-          <div className="bg-white p-3 mt-5">
+          </div>
+          <div className="bg-white px-3 py-1">
             {selected === "Food" ? (
               pastFood.length === 0 ? (
                 <div className="font-medium text-gray-500 py-3 text-center mx-3">No Past Orders</div>
               ) : (
-                <div className="mt-5">
+                <div className="mt-2">
                   {pastFood.map((order) => (
                     <div
                       key={order.orderId}
-                      className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
+                      className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg"
                     >
                       <div className="space-y-2 flex mb-3 font-light justify-between">
                         <div className="text-xs">
@@ -480,11 +482,11 @@ function Account() {
             ) : pastEssentails.length === 0 ? (
               <div className="font-medium text-gray-500 py-3 text-center mx-3">No Past Orders</div>
             ) : (
-              <div className="mt-5">
+              <div className="mt-2">
                 {pastEssentails.map((order) => (
                   <div
                     key={order.orderId}
-                    className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
+                    className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg"
                   >
                     <div className="space-y-2 flex mb-3 font-light justify-between">
                       <div className="text-xs">

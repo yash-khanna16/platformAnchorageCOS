@@ -11,6 +11,8 @@ import { Modal, ModalClose, ModalDialog, DialogContent } from "@mui/joy";
 import { CheckCircle } from "@mui/icons-material";
 import { useEssentialsCart } from "@/lib/EssentialsCartContext";
 import { sendGAEvent } from '@next/third-parties/google'
+import Lottie from "lottie-react";
+import animationData from "../../assets/tick.json";
 
 type DataType = {
   available: boolean;
@@ -291,32 +293,42 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           setConfirmModal(false);
           setCartEssentials([]);
           const query = searchParams.toString();
-          const newUrl = query ? `/account?${query}` : '/account';
+          const newUrl = query ? `/account?${query}` : "/account";
           router.push(newUrl);
-          
         }}
       >
         <ModalDialog style={{ width: "90vw" }}>
           <ModalClose style={{ zIndex: "10" }} />
           <DialogContent className="h-fit">
             <div className="flex flex-col h-32 items-center overflow-hidden ">
-              <CheckCircle className="h-20 scale-[300%] text-green-600" />
-              <div className="font-semibold text-2xl text-center">Order Placed Successfully!</div>
+              <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
             </div>
-            <div className="flex text-lg font-medium justify-between">
-              <div>Expected Waiting Time:</div>
-              <div>{timeToPrepare} mins</div>
+            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">Your Order has been placed!</div>
+            <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
+              Expected Waiting Time {timeToPrepare} mins
             </div>
-            <div className="flex justify-between">
+            <button
+              onClick={() => {
+                setConfirmModal(false);
+                setCartEssentials([]);
+                const query = searchParams.toString();
+                const newUrl = query ? `/timeline?${query}` : "/timeline";
+                router.push(newUrl);
+              }}
+              className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
+            >
+              Explore Journey<ArrowForward />
+            </button>
+            {/* <div className="flex justify-between">
               <div className=" capitalize">Item</div>
               <div>Qty</div>
             </div>
-            {cartEssentials.map((item: CartType, index: number) => (
+            {cart.map((item: CartType, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item.name}</div>
                 <div className="mr-2">{item.quantity}</div>
               </div>
-            ))}
+            ))} */}
           </DialogContent>
         </ModalDialog>
       </Modal>
