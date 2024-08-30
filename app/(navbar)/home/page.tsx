@@ -105,14 +105,17 @@ function Home() {
       try {
         const fetchedItems: MenuItem[] = await fetchAllItems();
         const availableItems = fetchedItems.filter((item) => item.available);
+  
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
-          if (!acc[item.category]) {
-            acc[item.category] = [];
+          if (item.category && item.category !== "essentials") {
+            if (!acc[item.category]) {
+              acc[item.category] = [];
+            }
+            acc[item.category].push(item);
           }
-          acc[item.category].push(item);
           return acc;
         }, {});
-
+  
         setItems(itemsByCategory);
         setCategories(Object.keys(itemsByCategory));
         setLoading(false);
@@ -120,9 +123,11 @@ function Home() {
         console.log(error);
       }
     };
+  
     setLoading(true);
     getItems();
   }, []);
+  
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (

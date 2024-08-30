@@ -310,8 +310,8 @@ function Account() {
           </div>
           <div className="my-4 mx-3 text-xs font-medium  text-red-500">ACTIVE ORDERS</div>
           <div className="bg-white">
-            {orders.length === 0 ? (
-              <div className="font-medium text-gray-500 py-3 text-center mx-3">No past Orders</div>
+            {active.length === 0 ? (
+              <div className="font-medium text-gray-500 py-3 text-center mx-3">No Active Orders</div>
             ) : (
               <div>
                 {active.map((order) => (
@@ -406,7 +406,7 @@ function Account() {
           <div className="bg-white p-3 mt-5">
             {selected === "Food" ? (
               pastFood.length === 0 ? (
-                <div>No Past Orders</div>
+                <div className="font-medium text-gray-500 py-3 text-center mx-3">No Past Orders</div>
               ) : (
                 <div className="mt-5">
                   {pastFood.map((order) => (
@@ -478,7 +478,7 @@ function Account() {
                 </div>
               )
             ) : pastEssentails.length === 0 ? (
-              <div>No Past Orders</div>
+              <div className="font-medium text-gray-500 py-3 text-center mx-3">No Past Orders</div>
             ) : (
               <div className="mt-5">
                 {pastEssentails.map((order) => (
