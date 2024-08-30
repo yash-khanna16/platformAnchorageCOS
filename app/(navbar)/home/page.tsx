@@ -130,11 +130,7 @@ function Home() {
   
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-    if (
-      event &&
-      event.type === "keydown" &&
-      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
-    ) {
+    if (event && event.type === "keydown" && ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")) {
       return;
     }
 
@@ -154,9 +150,7 @@ function Home() {
     setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
-        return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
-        );
+        return prevSelected.map((cartItem) => (cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem));
       } else {
         return [...prevSelected, { ...item, quantity: 1 }];
       }
@@ -167,9 +161,7 @@ function Home() {
     setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
-        return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
-        );
+        return prevSelected.map((cartItem) => (cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem));
       } else {
         return prevSelected.filter((cartItem) => cartItem.item_id !== item.item_id);
       }
@@ -248,24 +240,26 @@ function Home() {
       </div>
       <div className="sticky top-0 z-10 bg-white pb-4">
         <div className="flex justify-between mb-1 py-4 p-2 items-center">
-          <Image
-            src={Logo}
-            alt="Logo"
-            width={36}
-            height={36}
-            onClick={() => {
-              setCartOpen(!cartOpen);
-            }}
-          />
+          <div className="flex items-center gap-x-2">
+            <Image
+              src={Logo}
+              alt="Logo"
+              width={36}
+              height={36}
+              onClick={() => {
+                setCartOpen(!cartOpen);
+              }}
+            />
+            <div className="text-orange-500 border p-1 rounded-2xl px-3 font-semibold text-sm  bg-orange-50 border-orange-500"> BETA  </div>
+          </div>
+
           <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
         </div>
         <div className="text-sm flex space-x-3 overflow-scroll hide-scrollbar font-medium px-2 text-gray-600">
           {categories.map((element, index) => (
             <span
               key={index}
-              className={`${
-                navbar === element ? "text-red-600 border-red-400" : ""
-              } capitalize border px-3 py-1 rounded-2xl cursor-pointer`}
+              className={`${navbar === element ? "text-red-600 border-red-400" : ""} capitalize border px-3 py-1 rounded-2xl cursor-pointer`}
               onClick={() => {
                 setNavbar(element);
                 handleClick(element);
