@@ -4,11 +4,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import Schedule from "../assets/schedule";
+import Essentials from "../assets/essentials";
 
 function Navbar() {
   const pathname = usePathname();
   const path = pathname.split("/")[1];
-  const selected = path === "home" ? 0 : path === "timeline" ? 1 : 2;
+  const selected = path === "home" ? 0 : path === "timeline" ? 1 : path==="account"?2:3;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -19,16 +20,21 @@ function Navbar() {
       url: "/home",
     },
     {
+      icon: <Essentials selected={selected===3} />,
+      title: "Essentials",
+      url: "/essentials",
+    },
+    {
       icon: <Schedule  selected={selected===1} />,
       title: "Schedule",
       url: "/timeline",
     },
-    
     {
       icon: <AccountCircle className="text-[18px]" sx={{ color: selected === 2 ? "text-red-600" : "#737373" }} />,
       title: "Account",
       url: "/account",
     },
+    
   ];
 
   const handleNavigation = (url: string) => {

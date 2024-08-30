@@ -2,6 +2,7 @@ import { Suspense, useState } from "react";
 import Navbar from "./Navbar";
 import { CircularProgress } from "@mui/joy";
 import { CartProvider } from "@/lib/CartContext";
+import { EssentialsCartProvider } from "@/lib/EssentialsCartContext";
 
 export default function layout({
   children,
@@ -10,6 +11,7 @@ export default function layout({
 }>) {
   return (
     <CartProvider>
+      <EssentialsCartProvider>
       <Suspense
         fallback={
           <div className="w-screen h-screen justify-center items-center">
@@ -22,6 +24,7 @@ export default function layout({
           <Navbar />
         </div>
       </Suspense>
+      </EssentialsCartProvider>
     </CartProvider>
   );
 }

@@ -14,6 +14,7 @@ import { ArrowBackIosNew, Check, CheckCircle, Close, Info, Star } from "@mui/ico
 import { Textarea } from "@headlessui/react";
 import Lottie from "lottie-web";
 import { useCart } from "@/lib/CartContext";
+import { useEssentialsCart } from "@/lib/EssentialsCartContext";
 
 type ProfileData = {
   name: string;
@@ -34,6 +35,7 @@ type OrderType = {
     itemQty: number;
     itemPrice: number;
     itemType: string;
+    itemCategory: string;
   }[];
 };
 
@@ -43,7 +45,9 @@ function Account() {
     name: "",
     email: "",
   });
-  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [pastFood, setPastFood] = useState<OrderType[]>([]);
+  const [pastEssentails, setPastEssentials] = useState<OrderType[]>([]);
+  const [active, setActive] = useState<OrderType[]>([]);
   const [skeleton, setSkeleton] = useState(true);
   const params = useSearchParams();
   const room = params.get("room");
@@ -53,10 +57,13 @@ function Account() {
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const { cart, setCart } = useCart();
+  const { cartEssentials, setCartEssentials } = useEssentialsCart();
   const [alert, setAlert] = useState(false);
   const [message, setMessage] = useState("");
   const [reload, setReload] = useState(false);
   const router = useRouter();
+  const categories: string[] = ["Food", "Essentials"];
+  const [selected, setSelected] = useState("Food");
 
   useEffect(() => {
     if (!room) {
@@ -83,14 +90,44 @@ function Account() {
 
     router.push(`/home?room=${room}`);
   };
+  const handleReorderEssentials = (order: OrderType) => {
+    const itemsToAdd = order.items.map((item) => ({
+      available: true,
+      category: "",
+      description: item.itemDescription,
+      item_id: item.itemId,
+      name: item.itemName,
+      price: item.itemPrice,
+      time_to_prepare: 0,
+      type: item.itemType,
+      quantity: item.itemQty,
+    }));
+    console.log("items to add: ", itemsToAdd);
+
+    setCartEssentials((prevCart) => [...itemsToAdd]);
+
+    router.push(`/essentials?room=${room}`);
+  };
 
   const star = (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="#f3d00c" width={50} height={50} viewBox="0 0 576 512">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="#f3d00c"
+      width={50}
+      height={50}
+      viewBox="0 0 576 512"
+    >
       <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
     </svg>
   );
   const starUnfilled = (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="#dbdbdb" width={50} height={50} viewBox="0 0 576 512">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="#dbdbdb"
+      width={50}
+      height={50}
+      viewBox="0 0 576 512"
+    >
       <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
     </svg>
   );
@@ -103,8 +140,19 @@ function Account() {
         dataFetchedRef.current = true;
         const result = await fetchBookingData(auth.booking_id as string);
         const data = { name: result.name as string, email: result.email as string };
-        const orders = await fetchOrdersByBookingId(auth.booking_id as string);
-        setOrders(orders);
+        const orders: OrderType[] = await fetchOrdersByBookingId(auth.booking_id as string);
+        const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
+        const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
+        console.log(activeOrders);
+        const pastFoodData = pastOrders.filter(
+          (order) => order.items[0].itemCategory !== "essentials"
+        );
+        const pastEssentails = pastOrders.filter(
+          (order) => order.items[0].itemCategory === "essentials"
+        );
+        setPastFood(pastFoodData);
+        setPastEssentials(pastEssentails);
+        setActive(activeOrders);
         setProfileData(data);
         setSkeleton(false);
       } else if (!auth) {
@@ -138,8 +186,16 @@ function Account() {
       if (auth) {
         const result = await fetchBookingData(auth.booking_id as string);
         const data = { name: result.name as string, email: result.email as string };
-        const orders = await fetchOrdersByBookingId(auth.booking_id as string);
-        setOrders(orders);
+        const orders: OrderType[] = await fetchOrdersByBookingId(auth.booking_id as string);
+        const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
+        const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
+        const pastFood = pastOrders.filter((order) => order.items[0].itemCategory !== "essentials");
+        const pastEssentails = pastOrders.filter(
+          (order) => order.items[0].itemCategory === "essentials"
+        );
+        setPastFood(pastFood);
+        setPastEssentials(pastEssentails);
+        setActive(activeOrders);
         setProfileData(data);
         setSkeleton(false);
         setPlaceOrderModal(false);
@@ -175,7 +231,9 @@ function Account() {
       <div className="sticky shadow-md top-0 z-10 bg-white  ">
         <div className="flex justify-between mb-1 pt-4 p-2 items-center">
           <Image src={Logo} alt="Logo" width={36} height={36} />
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">Room: {room} </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
+            Room: {room}{" "}
+          </div>
         </div>
       </div>
       {!skeleton ? (
@@ -191,17 +249,22 @@ function Account() {
             </div>
             <div className="ml-5 w-9/12 my-auto">
               <div className="capitalize text-2xl font-medium text-red-500">{profileData.name}</div>
-              <div className="mt-2 break-words text-gray-500 font-medium text-sm">{profileData.email}</div>
+              <div className="mt-2 break-words text-gray-500 font-medium text-sm">
+                {profileData.email}
+              </div>
             </div>
           </div>
-          <div className="my-4 mx-3 text-xs font-medium  text-red-500">YOUR ORDERS</div>
+          <div className="my-4 mx-3 text-xs font-medium  text-red-500">ACTIVE ORDERS</div>
           <div className="bg-white">
-            {orders.length === 0 ? (
-              <div>No past Orders</div>
+            {active.length === 0 ? (
+              <div>No Active Orders</div>
             ) : (
               <div>
-                {orders.map((order) => (
-                  <div key={order.orderId} className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg">
+                {active.map((order) => (
+                  <div
+                    key={order.orderId}
+                    className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
+                  >
                     <div className="space-y-2 flex mb-3 font-light justify-between">
                       <div className="text-xs">
                         <span className="">{formatDate(order.orderedOn)}</span>
@@ -235,11 +298,185 @@ function Account() {
                         </div>
                       ))}
                       <div className="mt-3 flex font-medium text-gray-700 justify-between">
-                        Total: <span className="text-red-500  "> ₹ {calculateTotal(order.items).toFixed(2)}</span>
+                        Total:{" "}
+                        <span className="text-red-500  ">
+                          {" "}
+                          ₹ {calculateTotal(order.items).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                     <div className="flex w-full mt-4 space-x-3 ">
-                      <button onClick={() => handleReorder(order)} className="w-full bg-red-500 text-white py-2 rounded-xl ">
+                      <button
+                        onClick={() => {
+                          if (order.items[0].itemCategory === "essentials") {
+                            handleReorderEssentials(order);
+                          } else {
+                            handleReorder(order);
+                          }
+                        }}
+                        className="w-full bg-red-500 text-white py-2 rounded-xl "
+                      >
+                        Reorder
+                      </button>
+                      {order.rating === -1 && (
+                        <button
+                          onClick={() => {
+                            setReview(true);
+                            setReviewId(order.orderId);
+                          }}
+                          className="w-full border-red-500 border text-red-500 bg-white py-2 rounded-xl "
+                        >
+                          Rate order
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mb-4 mt-20 mx-3 text-xs font-medium  text-red-500">YOUR ORDERS</div>
+          {categories.map((element, index) => (
+            <span
+              key={index}
+              className={`${
+                selected === element ? "text-red-600 border-red-400" : ""
+              } capitalize border-b-2 font-medium  mx-3 cursor-pointer`}
+              onClick={() => {
+                setSelected(element);
+              }}
+            >
+              {element}
+            </span>
+          ))}
+          <div className="bg-white p-3 mt-5">
+            {selected === "Food" ? (
+              pastFood.length === 0 ? (
+                <div>No Past Orders</div>
+              ) : (
+                <div className="mt-5">
+                  {pastFood.map((order) => (
+                    <div
+                      key={order.orderId}
+                      className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
+                    >
+                      <div className="space-y-2 flex mb-3 font-light justify-between">
+                        <div className="text-xs">
+                          <span className="">{formatDate(order.orderedOn)}</span>
+                        </div>
+                        <div className="text-xs">
+                          {/* <span className="">{formatDate(order.orderedOn)}</span> */}
+                          <div className="flex font-normal space-x-2  items-center">
+                            <div> {order.orderStatus} </div>
+                            <CheckCircle className="text-green-500 text-[16px]" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        {order.items.map((item) => (
+                          <div key={item.itemId} className="text-sm flex justify-between  py-2 ">
+                            <div className="flex">
+                              <div className="flex space-x-2 items-center">
+                                <div>
+                                  <Image
+                                    alt={item.itemType}
+                                    width={15}
+                                    height={15}
+                                    src={item.itemType === "veg" ? veg.src : nonveg.src}
+                                  />
+                                </div>
+                                <div> {item.itemName}</div>
+                              </div>
+                              <span className="mx-1 text-gray-800"> x {item.itemQty}</span>
+                            </div>
+                            <div className="text-gray-900">₹ {item.itemPrice * item.itemQty}</div>
+                          </div>
+                        ))}
+                        <div className="mt-3 flex font-medium text-gray-700 justify-between">
+                          Total:{" "}
+                          <span className="text-red-500  ">
+                            {" "}
+                            ₹ {calculateTotal(order.items).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex w-full mt-4 space-x-3 ">
+                        <button
+                          onClick={() => handleReorderEssentials(order)}
+                          className="w-full bg-red-500 text-white py-2 rounded-xl "
+                        >
+                          Reorder
+                        </button>
+                        {order.rating === -1 && (
+                          <button
+                            onClick={() => {
+                              setReview(true);
+                              setReviewId(order.orderId);
+                            }}
+                            className="w-full border-red-500 border text-red-500 bg-white py-2 rounded-xl "
+                          >
+                            Rate order
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : pastEssentails.length === 0 ? (
+              <div>No Past Orders</div>
+            ) : (
+              <div className="mt-5">
+                {pastEssentails.map((order) => (
+                  <div
+                    key={order.orderId}
+                    className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
+                  >
+                    <div className="space-y-2 flex mb-3 font-light justify-between">
+                      <div className="text-xs">
+                        <span className="">{formatDate(order.orderedOn)}</span>
+                      </div>
+                      <div className="text-xs">
+                        {/* <span className="">{formatDate(order.orderedOn)}</span> */}
+                        <div className="flex font-normal space-x-2  items-center">
+                          <div> {order.orderStatus} </div>
+                          <CheckCircle className="text-green-500 text-[16px]" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      {order.items.map((item) => (
+                        <div key={item.itemId} className="text-sm flex justify-between  py-2 ">
+                          <div className="flex">
+                            <div className="flex space-x-2 items-center">
+                              <div>
+                                <Image
+                                  alt={item.itemType}
+                                  width={15}
+                                  height={15}
+                                  src={item.itemType === "veg" ? veg.src : nonveg.src}
+                                />
+                              </div>
+                              <div> {item.itemName}</div>
+                            </div>
+                            <span className="mx-1 text-gray-800"> x {item.itemQty}</span>
+                          </div>
+                          <div className="text-gray-900">₹ {item.itemPrice * item.itemQty}</div>
+                        </div>
+                      ))}
+                      <div className="mt-3 flex font-medium text-gray-700 justify-between">
+                        Total:{" "}
+                        <span className="text-red-500  ">
+                          {" "}
+                          ₹ {calculateTotal(order.items).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex w-full mt-4 space-x-3 ">
+                      <button
+                        onClick={() => handleReorderEssentials(order)}
+                        className="w-full bg-red-500 text-white py-2 rounded-xl "
+                      >
                         Reorder
                       </button>
                       {order.rating === -1 && (
@@ -306,7 +543,10 @@ function Account() {
         >
           <ArrowBackIosNew fontSize="small" />
         </div>
-        <div className="px-4 py-2 font-montserrat flex items-center justify-center" style={{ height: "100vh" }}>
+        <div
+          className="px-4 py-2 font-montserrat flex items-center justify-center"
+          style={{ height: "100vh" }}
+        >
           {!submitted && (
             <div className="space-y-6 -mt-12 text-center ">
               <div className="text-2xl font-bold">How Was Your Meal?</div>
@@ -326,16 +566,16 @@ function Account() {
               </div>
               <form
                 className="space-y-5"
-                onSubmit={async(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   console.log(`response rating: ${rating} comment: ${comment} for id: ${reviewId}`);
                   try {
-                    await updateFeedback(rating, comment, reviewId)
-                    setReload(!reload)
+                    await updateFeedback(rating, comment, reviewId);
+                    setReload(!reload);
                     setSubmitted(true);
-                  } catch(error) {
-                    setAlert(true)
-                    setMessage("Something went wrong")
+                  } catch (error) {
+                    setAlert(true);
+                    setMessage("Something went wrong");
                   }
                 }}
               >
