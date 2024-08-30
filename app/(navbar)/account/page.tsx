@@ -3,18 +3,21 @@ import React, { useEffect, useState, useRef } from "react";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { SwipeableDrawer } from "@mui/material";
 import LoginPage from "../../components/Login";
-import { fetchBookingData, fetchOrdersByBookingId, updateFeedback } from "@/app/actions/api";
+import { fetchBookingData, fetchFeedbackCOS, fetchOrdersByBookingId, insertFeedbackCOS, updateFeedback } from "@/app/actions/api";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CircularProgress, Snackbar } from "@mui/joy";
+import { CircularProgress, DialogContent, DialogTitle, Modal, ModalClose, ModalDialog, Snackbar } from "@mui/joy";
 import veg from "@/app/assets/veg.png";
 import nonveg from "@/app/assets/nonveg.png";
 import { ArrowBackIosNew, Check, CheckCircle, Close, Info, Star } from "@mui/icons-material";
 import { Textarea } from "@headlessui/react";
-import Lottie from "lottie-web";
 import { useCart } from "@/lib/CartContext";
 import { useEssentialsCart } from "@/lib/EssentialsCartContext";
+import { star, starSmall, starUnfilled, starUnfilledSmall } from "@/app/assets/icons";
+import { BookingInfoType } from "../timeline/page";
+import happy from "@/app/assets/happy.json";
+import Lottie from "lottie-react";
 
 type ProfileData = {
   name: string;
@@ -61,6 +64,11 @@ function Account() {
   const [alert, setAlert] = useState(false);
   const [message, setMessage] = useState("");
   const [reload, setReload] = useState(false);
+  const [submittedStayFeedback, setSubmittedStayFeedback] = useState(false);
+  const [feedback, setFeedback] = useState(false);
+  const [ratingStay, setRatingStay] = useState(0);
+  const [commentStay, setCommentStay] = useState("");
+
   const router = useRouter();
   const categories: string[] = ["Food", "Essentials"];
   const [selected, setSelected] = useState("Food");
@@ -71,6 +79,10 @@ function Account() {
       console.log("room: ", room);
     }
   }, [room]);
+
+  const delay = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
 
   const handleReorder = (order: OrderType) => {
     const itemsToAdd = order.items.map((item) => ({
@@ -141,6 +153,27 @@ function Account() {
         const result = await fetchBookingData(auth.booking_id as string);
         const data = { name: result.name as string, email: result.email as string };
         const orders: OrderType[] = await fetchOrdersByBookingId(auth.booking_id as string);
+        const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
+          booking_id: string;
+          comment: string;
+          last_modified: string;
+          rating: number;
+          type: string;
+        }[];
+        // console.log("feedback: ", feedback)
+        if (!feedback.some((f) => f.type === "stay")) {
+          // console.log("inside feedback if")
+          const lastClosed = localStorage.getItem("stayFeedbackLastClosed");
+          if (!lastClosed) {
+            // if page is opened for first time, then add delay of 15 seconds
+            delay(6000).then(() => {
+              setFeedback(true);
+            });
+          } else {
+            const shouldShowModal = Date.now() - parseInt(lastClosed) > 2 * 60 * 60 * 1000; // 2 hours
+            if (shouldShowModal) setFeedback(true);
+          }
+        }
         const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
         const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
         console.log(activeOrders);
@@ -187,6 +220,27 @@ function Account() {
         const result = await fetchBookingData(auth.booking_id as string);
         const data = { name: result.name as string, email: result.email as string };
         const orders: OrderType[] = await fetchOrdersByBookingId(auth.booking_id as string);
+        const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
+          booking_id: string;
+          comment: string;
+          last_modified: string;
+          rating: number;
+          type: string;
+        }[];
+        // console.log("feedback: ", feedback)
+        if (!feedback.some((f) => f.type === "stay")) {
+          // console.log("inside feedback if")
+          const lastClosed = localStorage.getItem("stayFeedbackLastClosed");
+          if (!lastClosed) {
+            // if page is opened for first time, then add delay of 15 seconds
+            delay(6000).then(() => {
+              setFeedback(true);
+            });
+          } else {
+            const shouldShowModal = Date.now() - parseInt(lastClosed) > 2 * 60 * 60 * 1000; // 2 hours
+            if (shouldShowModal) setFeedback(true);
+          }
+        }
         const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
         const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
         const pastFood = pastOrders.filter((order) => order.items[0].itemCategory !== "essentials");
@@ -256,8 +310,8 @@ function Account() {
           </div>
           <div className="my-4 mx-3 text-xs font-medium  text-red-500">ACTIVE ORDERS</div>
           <div className="bg-white">
-            {active.length === 0 ? (
-              <div>No Active Orders</div>
+            {orders.length === 0 ? (
+              <div className="font-medium text-gray-500 py-3 text-center mx-3">No past Orders</div>
             ) : (
               <div>
                 {active.map((order) => (
@@ -622,6 +676,104 @@ function Account() {
           )}
         </div>
       </SwipeableDrawer>
+
+      <Modal
+        open={feedback}
+        onClose={() => {
+          localStorage.setItem("stayFeedbackLastClosed", Date.now().toString());
+          console.log("here");
+          setFeedback(false);
+        }}
+      >
+        <ModalDialog
+          sx={{
+            width: "90vw",
+            borderRadius: "20px",
+            overflow: "hidden",
+          }}
+          style={{ width: "90vw" }}
+        >
+          <DialogTitle>Rate your stay at the Anchorage</DialogTitle>
+          <ModalClose style={{ zIndex: "10" }} />
+          <DialogContent className="h-fit">
+            {!submittedStayFeedback && (
+              <>
+                <div>How was your stay at the Anchorage? Please rate or share a suggestion.</div>
+                <div className="my-4">
+                  <div className="flex space-x-3 justify-center py-4 text-lg ">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => setRatingStay(value)} // Set the rating state
+                      >
+                        {value <= ratingStay ? starSmall : starUnfilledSmall}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="space-y-5 my-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      localStorage.setItem("stayFeedbackLastClosed", Date.now().toString());
+                      console.log(`response rating: ${rating} comment: ${comment} for timeline`);
+                      try {
+                        const user = (await getAuthCustomer()) as BookingInfoType;
+                        if (user) {
+                          console.log("user: ", user);
+                          await insertFeedbackCOS("stay", user?.booking_id, rating, comment);
+                          setSubmittedStayFeedback(true);
+                        }
+                      } catch (error) {
+                        setAlert(true);
+                        setMessage("Something went wrong");
+                      }
+                    }}
+                  >
+                    {ratingStay > 0 && (
+                      <textarea
+                        rows={5}
+                        value={commentStay}
+                        onChange={(e) => {
+                          setCommentStay(e.target.value);
+                        }}
+                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
+                        placeholder="Leave a comment..."
+                      />
+                    )}
+                    {ratingStay > 0 && (
+                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
+                        Submit
+                      </button>
+                    )}
+                  </form>
+                </div>
+              </>
+            )}
+            {submittedStayFeedback && (
+              <div className="">
+                <Lottie className="h-[200px] my-auto " animationData={happy} loop={false} />
+
+                <div className="text-center text-gray-600 text-lg font-medium">
+                  <div>Your feedback helps us improve.</div>
+                  <div>Thank you!</div>
+                </div>
+                <button
+                  className="p-3 my-6 bg-red-500 text-white rounded-2xl w-full"
+                  onClick={() => {
+                    setRatingStay(0);
+                    setCommentStay("");
+                    setSubmitted(false);
+                    setFeedback(false);
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+
       <Snackbar
         open={alert}
         autoHideDuration={5000}

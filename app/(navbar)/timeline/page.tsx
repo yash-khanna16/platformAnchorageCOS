@@ -3,25 +3,40 @@ import React, { useEffect, useState, useRef } from "react";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { SwipeableDrawer } from "@mui/material";
 import LoginPage from "../../components/Login";
-import { CircularProgress } from "@mui/joy";
+import { CircularProgress, DialogContent, DialogTitle, Modal, ModalClose, ModalDialog, Snackbar } from "@mui/joy";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LocationOn, NearMe, Place } from "@mui/icons-material";
-import { fetchSchedule } from "@/app/actions/api";
+import { Cancel, Close, Info, LocationOn, NearMe, Place } from "@mui/icons-material";
+import { fetchFeedbackCOS, fetchSchedule, insertFeedbackCOS, updateFeedback } from "@/app/actions/api";
+import { star, starSmall, starUnfilled, starUnfilledSmall } from "@/app/assets/icons";
+import Lottie from "lottie-react";
+import animationdata from "@/app/assets/happy.json";
+
+export type BookingInfoType = {
+  additional_info: string;
+  booking_id: string;
+  breakfast: number;
+  checkin: string; // Consider using Date if you plan to work with Date objects
+  checkout: string; // Same as above
+  exp: number;
+  guest_email: string;
+  iat: number;
+  meal_non_veg: number;
+  meal_veg: number;
+  remarks: string;
+  room: string;
+};
 
 type Event =
   | { checkin: { Date: string; pickupLocation: string } }
   | { movement: { Date: string; pickupLocation: string; dropLocation: string } }
   | { checkOut: { Date: string; pickupLocation: string } };
 
-
-
 const convertToEventArray = (
   arr: { dateTime: string; dropLocation: string; pickUpLocation: string; type: "Checkin" | "Movement" | "Checkout" }[]
 ): Event[] => {
   return arr.map((item) => {
-
     switch (item.type) {
       case "Checkin":
         return {
@@ -76,8 +91,18 @@ function Timeline() {
   const params = useSearchParams();
   const room = params.get("room");
   const [scheduleData, setScheduleData] = useState<Event[]>([]);
+  const [feedback, setFeedback] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [alert, setAlert] = useState(false);
+  const [message, setMessage] = useState("");
 
   const router = useRouter();
+
+  const delay = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
 
   useEffect(() => {
     if (!room) {
@@ -85,7 +110,6 @@ function Timeline() {
       console.log("room: ", room);
     }
   }, [room]);
-
 
   const dataFetchedRef = useRef(false);
   useEffect(() => {
@@ -95,6 +119,25 @@ function Timeline() {
         dataFetchedRef.current = true;
         setSkeleton(false);
         const res = await fetchSchedule(auth.booking_id as string);
+        const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
+          booking_id: string;
+          comment: string;
+          last_modified: string;
+          rating: number;
+          type: string;
+        }[];
+        if (!feedback.some((f) => f.type === "timeline")) {
+          const lastClosed = localStorage.getItem("timelineFeedbackLastClosed");
+          if (!lastClosed) {
+            // if page is opened for first time, then add delay of 15 seconds
+            delay(15000).then(() => {
+              setFeedback(true);
+            });
+          } else {
+            const shouldShowModal = Date.now() - parseInt(lastClosed) > 2 * 60 * 60 * 1000; // 2 hours
+            if (shouldShowModal) setFeedback(true);
+          }
+        }
         setScheduleData(convertToEventArray(res));
         console.log(auth.bookingid);
       } else if (!auth) {
@@ -112,6 +155,25 @@ function Timeline() {
         setSkeleton(false);
         setPlaceOrderModal(false);
         const res = await fetchSchedule(auth.booking_id as string);
+        const feedback = (await fetchFeedbackCOS(auth.booking_id as string)) as {
+          booking_id: string;
+          comment: string;
+          last_modified: string;
+          rating: number;
+          type: string;
+        }[];
+        if (!feedback.some((f) => f.type === "timeline")) {
+          const lastClosed = localStorage.getItem("timelineFeedbackLastClosed");
+          if (!lastClosed) {
+            // if page is opened for first time, then add delay of 15 seconds
+            delay(15000).then(() => {
+              setFeedback(true);
+            });
+          } else {
+            const shouldShowModal = Date.now() - parseInt(lastClosed) > 2 * 60 * 60 * 1000; // 2 hours
+            if (shouldShowModal) setFeedback(true);
+          }
+        }
         setScheduleData(convertToEventArray(res));
         console.log("schedule: ", res);
       } else {
@@ -141,8 +203,9 @@ function Timeline() {
             {scheduleData.map((event, index) => {
               let eventDateTime: Date | null = null;
               let eventLabel = "";
-              let pickupLocation = "", dropLocation = ""
-              console.log("event: ", event)
+              let pickupLocation = "",
+                dropLocation = "";
+              console.log("event: ", event);
               if ("checkin" in event) {
                 eventDateTime = new Date(event.checkin.Date);
                 eventLabel = "Check In";
@@ -254,6 +317,103 @@ function Timeline() {
         </div>
       )}
 
+      <Modal
+        open={feedback}
+        onClose={() => {
+          localStorage.setItem("timelineFeedbackLastClosed", Date.now().toString());
+          console.log("here");
+          setFeedback(false);
+        }}
+      >
+        <ModalDialog
+          sx={{
+            width: "90vw",
+            borderRadius: "20px",
+            overflow: "hidden",
+          }}
+          style={{ width: "90vw" }}
+        >
+          <DialogTitle>Rate Timeline</DialogTitle>
+          <ModalClose style={{ zIndex: "10" }} />
+          <DialogContent className="h-fit">
+            {!submitted && (
+              <>
+                <div>How was your experience with the Timeline? Please rate or share a suggestion.</div>
+                <div className="my-4">
+                  <div className="flex space-x-3 justify-center py-4 text-lg ">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => setRating(value)} // Set the rating state
+                      >
+                        {value <= rating ? starSmall : starUnfilledSmall}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="space-y-5 my-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      localStorage.setItem("timelineFeedbackLastClosed", Date.now().toString());
+                      console.log(`response rating: ${rating} comment: ${comment} for timeline`);
+                      try {
+                        const user = (await getAuthCustomer()) as BookingInfoType;
+                        if (user) {
+                          console.log("user: ", user);
+                          await insertFeedbackCOS("timeline", user?.booking_id, rating, comment);
+                          setSubmitted(true);
+                        }
+                      } catch (error) {
+                        setAlert(true);
+                        setMessage("Something went wrong");
+                      }
+                    }}
+                  >
+                    {rating > 0 && (
+                      <textarea
+                        rows={5}
+                        value={comment}
+                        onChange={(e) => {
+                          setComment(e.target.value);
+                        }}
+                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
+                        placeholder="Leave a comment..."
+                      />
+                    )}
+                    {rating > 0 && (
+                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
+                        Submit
+                      </button>
+                    )}
+                  </form>
+                </div>
+              </>
+            )}
+            {submitted && (
+              <div className="">
+                <Lottie className="h-[200px] my-auto " animationData={animationdata} loop={false} />
+
+                <div className="text-center text-gray-600 text-lg font-medium">
+                  <div>Your feedback helps us improve.</div>
+                  <div>Thank you!</div>
+                </div>
+                <button
+                  className="p-3 my-6 bg-red-500 text-white rounded-2xl w-full"
+                  onClick={() => {
+                    setRating(0);
+                    setComment("");
+                    setSubmitted(false);
+                    setFeedback(false);
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+
       <SwipeableDrawer
         anchor={"bottom"}
         open={placeOrderModal}
@@ -268,6 +428,24 @@ function Timeline() {
           <LoginPage setPlaceOrderModal={setPlaceOrderModal} location="timeline" />
         </div>
       </SwipeableDrawer>
+      <Snackbar
+        open={alert}
+        autoHideDuration={5000}
+        // color="danger"
+        onClose={() => {
+          setAlert(false);
+        }}
+      >
+        <div className="flex justify-between w-full">
+          <div>
+            <Info />
+            {message}
+          </div>
+          <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
+            <Close />
+          </div>
+        </div>
+      </Snackbar>
     </div>
   );
 }
