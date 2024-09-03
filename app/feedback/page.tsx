@@ -17,8 +17,8 @@ function Feedback({ searchParams }: { searchParams: { booking_id?: string } }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log(`loading: ${loading}, fetching from api`)
     if (searchParams.booking_id) {
-      console.log(`loading: ${loading}, fetching from api`)
       fetchFeedbackCOS(searchParams.booking_id)
         .then((feedback) => {
           setLoading(false);
