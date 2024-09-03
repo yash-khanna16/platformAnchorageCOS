@@ -16,13 +16,11 @@ function Feedback({ searchParams }: { searchParams: { booking_id?: string } }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
-  console.log(`loading: ${loading}, fetching from api`)
   useEffect(() => {
     if (searchParams.booking_id) {
       fetchFeedbackCOS(searchParams.booking_id)
         .then((feedback) => {
           setLoading(false);
-          console.log(`data from api: ${feedback}`)
           if (feedback.length > 0) {
             setSubmitted(true);
           }
@@ -34,9 +32,6 @@ function Feedback({ searchParams }: { searchParams: { booking_id?: string } }) {
     }
   }, []);
 
-  // const params = useParams<{ tag: string; item: string }>()
-
-  // console.log("booking id ", booking_id)
 
   return (
     <div>
