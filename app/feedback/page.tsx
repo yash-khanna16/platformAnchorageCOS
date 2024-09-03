@@ -18,15 +18,17 @@ function Feedback({ searchParams }: { searchParams: { booking_id?: string } }) {
 
   useEffect(() => {
     if (searchParams.booking_id) {
+      console.log(`loading: ${loading}, fetching from api`)
       fetchFeedbackCOS(searchParams.booking_id)
         .then((feedback) => {
           setLoading(false);
+          console.log(`data from api: ${feedback}`)
           if (feedback.length > 0) {
             setSubmitted(true);
           }
         })
         .catch((error) => {
-          console.log("error fetching feedback: ", error);
+          console.error("error fetching feedback: ", error);
           setLoading(false);
         });
     }

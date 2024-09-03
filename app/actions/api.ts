@@ -225,6 +225,7 @@ export async function updateFeedback(rating: number, feedback: string, orderid: 
 }
 export async function fetchFeedbackCOS(booking_id: string) {
   try {
+    console.log(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`)
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`, {
       method: "GET",
       mode: "cors",
@@ -234,6 +235,7 @@ export async function fetchFeedbackCOS(booking_id: string) {
       },
       cache: "no-cache",
     });
+    console.log("response of feedback: ", response)
 
     const data = await response.json(); // Parse the JSON response
     if (!response.ok) {
