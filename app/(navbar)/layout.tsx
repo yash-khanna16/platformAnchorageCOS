@@ -14,7 +14,7 @@ export default function layout({
       <EssentialsCartProvider>
       <Suspense
         fallback={
-          <div className="w-screen h-screen justify-center items-center">
+          <div className="w-screen h-screen flex justify-center items-center">
             <CircularProgress />
           </div>
         }
