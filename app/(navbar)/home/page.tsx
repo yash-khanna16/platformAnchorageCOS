@@ -17,6 +17,8 @@ import { getAuthCustomer } from "@/app/actions/cookie";
 import { BookingInfoType } from "../timeline/page";
 import Lottie from "lottie-react";
 import animationdata from "@/app/assets/happy.json";
+import DarkMode from "@mui/icons-material/DarkMode";
+import { Switch } from "@mui/material";
 
 type MenuItem = {
   available: boolean;
@@ -48,7 +50,7 @@ function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [alert, setAlert] = useState(false);
   const [message, setMessage] = useState("");
-
+  const [vegOnly, setVegOnly] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
 
   const params = useSearchParams();
@@ -105,7 +107,7 @@ function Home() {
       try {
         const fetchedItems: MenuItem[] = await fetchAllItems();
         const availableItems = fetchedItems.filter((item) => item.available);
-  
+
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
           if (item.category && item.category !== "essentials") {
             if (!acc[item.category]) {
@@ -115,7 +117,7 @@ function Home() {
           }
           return acc;
         }, {});
-  
+
         setItems(itemsByCategory);
         setCategories(Object.keys(itemsByCategory));
         setLoading(false);
@@ -123,14 +125,17 @@ function Home() {
         console.log(error);
       }
     };
-  
+
     setLoading(true);
     getItems();
   }, []);
-  
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-    if (event && event.type === "keydown" && ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")) {
+    if (
+      event &&
+      event.type === "keydown" &&
+      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
+    ) {
       return;
     }
 
@@ -150,7 +155,9 @@ function Home() {
     setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
-        return prevSelected.map((cartItem) => (cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem));
+        return prevSelected.map((cartItem) =>
+          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+        );
       } else {
         return [...prevSelected, { ...item, quantity: 1 }];
       }
@@ -161,7 +168,9 @@ function Home() {
     setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
-        return prevSelected.map((cartItem) => (cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem));
+        return prevSelected.map((cartItem) =>
+          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
+        );
       } else {
         return prevSelected.filter((cartItem) => cartItem.item_id !== item.item_id);
       }
@@ -171,40 +180,6 @@ function Home() {
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
-
-  // useEffect(() => {
-  //   const observerOptions = {
-  //     root: null,
-  //     rootMargin: "0px",
-  //     threshold: 0.5,
-  //   };
-
-  //   const observerCallback = (entries: IntersectionObserverEntry[]) => {
-  //     entries.forEach((entry) => {
-  //       if (entry.isIntersecting) {
-  //         setNavbar(entry.target.id);
-  //       }
-  //     });
-  //   };
-
-  //   const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-  //   sectionIds.forEach((id) => {
-  //     const section = document.getElementById(id);
-  //     if (section) {
-  //       observer.observe(section);
-  //     }
-  //   });
-
-  //   return () => {
-  //     sectionIds.forEach((id) => {
-  //       const section = document.getElementById(id);
-  //       if (section) {
-  //         observer.unobserve(section);
-  //       }
-  //     });
-  //   };
-  // }, [sectionIds]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -250,16 +225,33 @@ function Home() {
                 setCartOpen(!cartOpen);
               }}
             />
-            <div className="text-orange-500 border p-1 rounded-2xl px-3 font-semibold text-sm  bg-orange-50 border-orange-500"> BETA  </div>
+            <div className="text-orange-500 border p-1 rounded-2xl px-3 font-semibold text-sm  bg-orange-50 border-orange-500">
+              BETA
+            </div>
+          </div>
+          <div className="m-2 text-sm justify-center  items-center flex">
+            <div className="font-semibold text-green-500">Veg Only</div>
+            <div>
+              <Switch
+                checked={vegOnly}
+                onChange={(e) => {
+                  setVegOnly(e.target.checked);
+                }}
+                color="success"
+              />
+            </div>
           </div>
 
           <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
         </div>
+
         <div className="text-sm flex space-x-3 overflow-scroll hide-scrollbar font-medium px-2 text-gray-600">
           {categories.map((element, index) => (
             <span
               key={index}
-              className={`${navbar === element ? "text-red-600 border-red-400" : ""} capitalize border px-3 py-1 rounded-2xl cursor-pointer`}
+              className={`${
+                navbar === element ? "text-red-600 border-red-400" : ""
+              } capitalize border min-w-fit px-3 py-1 rounded-2xl cursor-pointer`}
               onClick={() => {
                 setNavbar(element);
                 handleClick(element);
@@ -283,7 +275,13 @@ function Home() {
           {Object.keys(items).map((key, index) => (
             <div key={index} id={key} className="px-3">
               <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
-              {items[key].map((item) => {
+              {items[key].filter((item)=> {
+                if (vegOnly) {
+                  if (item.type === "veg") return item;
+                } else {
+                  return item;
+                }
+              } ).map((item) => {
                 const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
                 return (
                   <div key={item.item_id} className="p-2 border-b border-gray-300 border-dashed">
@@ -304,7 +302,7 @@ function Home() {
                           {expandedId === item.item_id ? (
                             <div className="text-sm leading-5">
                               {item.description}{" "}
-                              <button className="font-medium text-blue-500" onClick={() => toggleExpand(item.item_id)}>
+                              <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                                 show less
                               </button>
                             </div>
