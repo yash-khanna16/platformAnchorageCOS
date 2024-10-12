@@ -5,8 +5,9 @@ import { sendOTPByEmail, verifyOTP } from "../actions/api";
 import { Snackbar } from "@mui/joy";
 import { Close, Info } from "@mui/icons-material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { setAuthCustomer } from "../actions/cookie";
 
-function VerifyOTP({ email }: { email: string }) {
+function VerifyOTP({ email,setPlaceOrderModal }: { email: string,setPlaceOrderModal:React.Dispatch<React.SetStateAction<boolean>> }) {
   const [otp, setOTP] = useState<string[]>(new Array(6).fill(""));
   const [error, setError] = useState("");
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
@@ -77,18 +78,16 @@ function VerifyOTP({ email }: { email: string }) {
     try {
       setLoading(true);
       const res = await verifyOTP(email, enteredOTP);
-      if (res.message === "Verified") {
-        const params = new URLSearchParams(searchParams.toString());
-        const room = searchParams.get("room");
-        if (room) {
-          params.set("room", room);
-          router.push("/home"+'?'+params);
-          console.log("verified");
-        }
+      if (res.token) {
+        setAuthCustomer(res.token);
+        setPlaceOrderModal(false);
+        setLoading(false);
       }
-      setAlert(true);
-      setMessage(res.message);
-      setLoading(false);
+      else{
+        setAlert(true);
+        setMessage(res.message);
+        setLoading(false);
+      }
     } catch (error) {
       setAlert(true);
       setMessage("Something went wrong! Please try again later");
