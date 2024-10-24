@@ -1,17 +1,12 @@
 "use client";
-import { Add, ArrowForward, AutoAwesome, Close, Info, Remove } from "@mui/icons-material";
+import { Add, ArrowForward, AutoAwesome, Close, Info, Remove, TrendingDown, TrendingUp } from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import Veg from "../../assets/veg.png";
 import Nonveg from "../../assets/nonveg.png";
 import React, { useEffect, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import {
-  fetchAllItems,
-  fetchFeedbackCOS,
-  fetchOrdersByBookingId,
-  insertFeedbackCOS,
-} from "../../actions/api";
+import { fetchAllItems, fetchFeedbackCOS, fetchOrdersByBookingId, insertFeedbackCOS } from "../../actions/api";
 import Cart from "./Cart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
@@ -118,7 +113,7 @@ function Home() {
     const getItems = async () => {
       try {
         const fetchedItems: MenuItem[] = await fetchAllItems();
-        console.log("items: ", fetchedItems)
+        console.log("items: ", fetchedItems);
         const availableItems = fetchedItems.filter((item) => item.available);
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
           if (item.category && item.category !== "essentials") {
@@ -155,8 +150,7 @@ function Home() {
     if (
       event &&
       event.type === "keydown" &&
-      ((event as React.KeyboardEvent).key === "Tab" ||
-        (event as React.KeyboardEvent).key === "Shift")
+      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
     ) {
       return;
     }
@@ -246,18 +240,8 @@ function Home() {
   return (
     <div className="font-montserrat">
       <div>
-        <SwipeableDrawer
-          anchor={"bottom"}
-          open={cartOpen}
-          onClose={toggleDrawer(false)}
-          onOpen={toggleDrawer(true)}
-        >
-          <Cart
-            cartOpen={cartOpen}
-            setCartOpen={setCartOpen}
-            expandedId={expandedId}
-            toggleExpand={toggleExpand}
-          />
+        <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
+          <Cart cartOpen={cartOpen} setCartOpen={setCartOpen} expandedId={expandedId} toggleExpand={toggleExpand} />
         </SwipeableDrawer>
       </div>
       <div className="sticky top-0 z-10 bg-white pb-4">
@@ -290,17 +274,14 @@ function Home() {
             </div>
           </div>
 
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
-            {" "}
-            Room: {room}{" "}
-          </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
         </div>
 
         <div>
           {filterOn === false ? (
             <div className="flex">
               <button
-                className="ml-1"
+                className="ml-1 w-12"
                 onClick={() => {
                   setFilterButtonOn(!filterButtonOn);
                 }}
@@ -308,46 +289,40 @@ function Home() {
                 {filterButtonOn ? (
                   <Close style={{ height: "30" }} />
                 ) : (
-                  <Image
-                    alt="filter"
-                    className=" p-1"
-                    src={Filter}
-                    height={55}
-                    style={{ maxHeight: "30px", maxWidth: "30px" }}
-                  />
+                  <Image alt="filter" className=" p-1" src={Filter} height={55} style={{ maxHeight: "30px", maxWidth: "30px" }} />
                 )}
                 <div
                   id="filterDropDown"
                   className={`${
                     filterButtonOn ? "block" : "hidden"
-                  } absolute bg-white border shadow-md px-2 mt-2 text-lg text-gray-800`}
+                  } absolute bg-white border shadow-md px-2 py-2 mt-2 text-lg rounded-xl text-gray-800`}
                 >
                   <div
-                    className="text-left mt-1"
+                    className="text-left mt-1 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Best");
                     }}
                   >
                     <AutoAwesome className="relative -top-0.5" style={{ height: "18" }} />
-                    BestSeller
+                    <span className="text-sm ml-1 font-medium">Bestseller</span>
                   </div>
                   <div
-                    className="flex my-2"
+                    className="flex my-2 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Up");
                     }}
                   >
-                    <Image alt="filter" className=" p-1" src={Up} height={18} width={25} />
-                    Price Low to High
+                    <TrendingUp />
+                    <span className="text-sm ml-1 font-medium">Price Low to High</span>
                   </div>
                   <div
-                    className="flex mb-1"
+                    className="flex mb-1 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Down");
                     }}
                   >
-                    <Image alt="filter" className=" p-1" src={Down} height={18} width={25} />
-                    Price High to Low
+                    <TrendingDown />
+                    <span className="text-sm ml-1 font-medium">Price High to Low</span>
                   </div>
                 </div>
               </button>
@@ -387,7 +362,7 @@ function Home() {
           ) : (
             <div className="flex items-center">
               <button
-                className="ml-1"
+                className="ml-1 w-10"
                 onClick={() => {
                   setFilterButtonOn(!filterButtonOn);
                 }}
@@ -401,67 +376,76 @@ function Home() {
                   id="filterDropDown"
                   className={`${
                     filterButtonOn ? "block" : "hidden"
-                  } absolute bg-white border shadow-md px-2 mt-2 text-lg text-gray-800`}
+                  } absolute bg-white border shadow-md px-2 py-2 mt-2 text-lg rounded-xl text-gray-800`}
                 >
                   <div
-                    className="text-left"
+                    className="text-left mt-1 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Best");
                     }}
                   >
                     <AutoAwesome className="relative -top-0.5" style={{ height: "18" }} />
-                    BestSeller
+                    <span className="text-sm ml-1 font-medium">Bestseller</span>
                   </div>
                   <div
-                    className="flex"
+                    className="flex my-2 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Up");
                     }}
                   >
-                    <Image alt="filter" className=" p-1" src={Up} height={18} width={25} />
-                    Price Low to High
+                    <TrendingUp />
+                    <span className="text-sm ml-1 font-medium">Price Low to High</span>
                   </div>
                   <div
-                    className="flex"
+                    className="flex mb-1 flex items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Down");
                     }}
                   >
-                    <Image alt="filter" className=" p-1" src={Down} height={18} width={25} />
-                    Price High to Low
+                    <TrendingDown />
+                    <span className="text-sm ml-1 font-medium">Price High to Low</span>
                   </div>
                 </div>
               </button>
               <div>
                 {filter === "Best" ? (
-                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit px-3 py-1 rounded-2xl cursor-pointer">
-                    Best Seller{" "}
-                    <Close
-                      className="relative -top-0.5"
-                      onClick={() => {
-                        setFilterOn(false);
-                      }}
-                    />
+                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit flex items-center px-3 py-1 text-sm font-medium gap-x-1 rounded-2xl cursor-pointer">
+                    <div className="">Bestseller</div>
+                    <div>
+                      <Close
+                        fontSize="small"
+                        className=""
+                        onClick={() => {
+                          setFilterOn(false);
+                        }}
+                      />
+                    </div>
                   </span>
                 ) : filter === "Up" ? (
-                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit px-3 py-1 rounded-2xl cursor-pointer">
-                    Price Low To High
-                    <Close
-                      className="relative -top-0.5"
-                      onClick={() => {
-                        setFilterOn(false);
-                      }}
-                    />
+                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit flex items-center px-3 py-1 text-sm font-medium gap-x-1 rounded-2xl cursor-pointer">
+                    <div className="">Price Low to High</div>
+                    <div>
+                      <Close
+                        fontSize="small"
+                        className=""
+                        onClick={() => {
+                          setFilterOn(false);
+                        }}
+                      />
+                    </div>
                   </span>
                 ) : filter === "Down" ? (
-                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit px-3 py-1 rounded-2xl cursor-pointer">
-                    Price High To Low
-                    <Close
-                      className="relative -top-0.5"
-                      onClick={() => {
-                        setFilterOn(false);
-                      }}
-                    />
+                  <span className="ml-1 border text-red-600 border-red-400 min-w-fit flex items-center px-3 py-1 text-sm font-medium gap-x-1 rounded-2xl cursor-pointer">
+                    <div className="">Price High to Low</div>
+                    <div>
+                      <Close
+                        fontSize="small"
+                        className=""
+                        onClick={() => {
+                          setFilterOn(false);
+                        }}
+                      />
+                    </div>
                   </span>
                 ) : (
                   <></>
@@ -475,10 +459,7 @@ function Home() {
         <div className="p-4">
           <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse"></div>
           {[1, 2, 3, 4, 5, 6, 7].map((element: number) => (
-            <div
-              key={element}
-              className="flex justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse"
-            >
+            <div key={element} className="flex justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse">
               <div>
                 <div className="mt-2 bg-gray-200 w-44 h-6"></div>
                 <div className="w-10 h-5 bg-gray-200 my-3 "></div>
@@ -505,12 +486,9 @@ function Home() {
                   <div className="flex justify-between items-center">
                     <div className="my-2">
                       {item.bestSeller && (
-                        <span className=" border-red-500 p-0.5 border bg-yellow-50 text-sm font-medium rounded-md text-red-600">
-                          <AutoAwesomeIcon
-                            className="inline relative -top-0.5"
-                            style={{ height: "15px", width: "15px" }}
-                          />
-                          BestSeller
+                        <span className=" border-red-500 p-1 px-2 border bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
+                          <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
+                          <span className="ml-1">Bestseller</span>
                         </span>
                       )}
                       <div className="flex items-center mt-1">
@@ -529,10 +507,7 @@ function Home() {
                         {expandedId === item.item_id ? (
                           <div className="text-sm leading-5">
                             {item.description}{" "}
-                            <button
-                              className="font-medium text-red-500 text-xs"
-                              onClick={() => toggleExpand(item.item_id)}
-                            >
+                            <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                               show less
                             </button>
                           </div>
@@ -541,10 +516,7 @@ function Home() {
                             {item.description.split(" ").slice(0, 15).join(" ")}
                             {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                             {item.description.split(" ").length > 10 && (
-                              <button
-                                className="font-medium text-red-500 text-xs"
-                                onClick={() => toggleExpand(item.item_id)}
-                              >
+                              <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                                 read more
                               </button>
                             )}
@@ -555,17 +527,11 @@ function Home() {
                     <div className="font-medium ml-3 mt-1">
                       {selectedItem ? (
                         <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                          <button
-                            onClick={() => handleRemoveItem(item)}
-                            className="absolute top-2 left-1"
-                          >
+                          <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
                             <Remove fontSize="small" />
                           </button>
                           {selectedItem.qty}
-                          <button
-                            onClick={() => handleAddItem(item)}
-                            className="absolute top-2 right-1"
-                          >
+                          <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
                             <Add fontSize="small" />
                           </button>
                         </div>
@@ -604,11 +570,8 @@ function Home() {
                         <div className="my-2">
                           {item.bestSeller && (
                             <span className=" border-red-500 p-0.5 border bg-yellow-50 text-sm font-medium rounded-md text-red-600">
-                              <AutoAwesomeIcon
-                                className="inline relative -top-0.5"
-                                style={{ height: "15px", width: "15px" }}
-                              />
-                              BestSeller
+                              <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
+                              Bestseller
                             </span>
                           )}
                           <div className="flex items-center mt-1">
@@ -627,10 +590,7 @@ function Home() {
                             {expandedId === item.item_id ? (
                               <div className="text-sm leading-5">
                                 {item.description}{" "}
-                                <button
-                                  className="font-medium text-red-500 text-xs"
-                                  onClick={() => toggleExpand(item.item_id)}
-                                >
+                                <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                                   show less
                                 </button>
                               </div>
@@ -639,10 +599,7 @@ function Home() {
                                 {item.description.split(" ").slice(0, 15).join(" ")}
                                 {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                                 {item.description.split(" ").length > 10 && (
-                                  <button
-                                    className="font-medium text-red-500 text-xs"
-                                    onClick={() => toggleExpand(item.item_id)}
-                                  >
+                                  <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                                     read more
                                   </button>
                                 )}
@@ -653,17 +610,11 @@ function Home() {
                         <div className="font-medium ml-3 mt-1">
                           {selectedItem ? (
                             <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                              <button
-                                onClick={() => handleRemoveItem(item)}
-                                className="absolute top-2 left-1"
-                              >
+                              <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
                                 <Remove fontSize="small" />
                               </button>
                               {selectedItem.qty}
-                              <button
-                                onClick={() => handleAddItem(item)}
-                                className="absolute top-2 right-1"
-                              >
+                              <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
                                 <Add fontSize="small" />
                               </button>
                             </div>
@@ -724,10 +675,7 @@ function Home() {
           <DialogContent className="h-fit">
             {!submitted && (
               <>
-                <div>
-                  Did everything go smoothly with your order? Please rate your experience or share a
-                  suggestion
-                </div>
+                <div>Did everything go smoothly with your order? Please rate your experience or share a suggestion</div>
                 <div className="my-4">
                   <div className="flex space-x-3 justify-center py-4 text-lg ">
                     {[1, 2, 3, 4, 5].map((value) => (
@@ -765,17 +713,12 @@ function Home() {
                         onChange={(e) => {
                           setComment(e.target.value);
                         }}
-                        className={
-                          "w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"
-                        }
+                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
                         placeholder="Leave a comment..."
                       />
                     )}
                     {rating > 0 && (
-                      <button
-                        className="p-3 bg-red-500 text-white rounded-2xl w-[100%]"
-                        type="submit"
-                      >
+                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
                         Submit
                       </button>
                     )}
