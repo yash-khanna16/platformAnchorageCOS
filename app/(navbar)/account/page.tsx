@@ -18,6 +18,7 @@ import { star, starSmall, starUnfilled, starUnfilledSmall } from "@/app/assets/i
 import { BookingInfoType } from "../timeline/page";
 import happy from "@/app/assets/happy.json";
 import Lottie from "lottie-react";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type ProfileData = {
   name: string;
@@ -398,6 +399,7 @@ function Account() {
                 selected === element ? "text-red-600 border-red-400" : ""
               } capitalize border-b-2  bg-white font-medium  mx-3 cursor-pointer`}
               onClick={() => {
+                sendGAEvent('event', 'pastOrdertType', { value: element })
                 setSelected(element);
               }}
             >

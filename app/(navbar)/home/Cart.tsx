@@ -24,6 +24,9 @@ import Lottie from "lottie-react";
 import animationData from "../../assets/tick.json";
 import { CircularProgress } from "@mui/joy";
 import { sendGAEvent } from "@next/third-parties/google";
+import { fetchAllItems } from "@/app/actions/api";
+import Veg from "../../assets/veg.png";
+import Nonveg from "../../assets/nonveg.png";
 import ApplyCoupon, { Coupon } from "./ApplyCoupon";
 import { useFreeItems } from "@/lib/FreeCartContext";
 
@@ -36,6 +39,20 @@ type DataType = {
   price: number;
   time_to_prepare: number;
   type: string;
+};
+
+type MenuItem = {
+  available: boolean;
+  category: string;
+  description: string;
+  item_id: string;
+  name: string;
+  price: number;
+  time_to_prepare: number;
+  type: string;
+  category_id: string;
+  sequence: number;
+  bestSeller: boolean;
 };
 
 type CartType = DataType & {
@@ -59,7 +76,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [confirmModal, setConfirmModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [timeToPrepare, setTimeToPrepare] = useState(0);
-  const [notAvailable, setNotAvailable] = useState<{ item_id: string; name: string; available: boolean }[]>([]);
+  const [notAvailable, setNotAvailable] = useState<
+    { item_id: string; name: string; available: boolean }[]
+  >([]);
+  const [bestSellerLoading, setBestSellerLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [discount, setDiscount] = useState<number>(0);
@@ -70,6 +90,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const { cart, setCart } = useCart();
   const { freeItems, setFreeItems } = useFreeItems();
   const searchParams = useSearchParams();
+  const [bestSeller, setBestseller] = useState<MenuItem[]>([]);
   const platformFee = 2;
   const router = useRouter();
 
@@ -168,13 +189,17 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
         if (result.status === 200) {
           let time_to_prepare = 0;
           result.data.details.items.forEach((element: any) => {
-            time_to_prepare = time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
+            time_to_prepare =
+              time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
           });
           setTimeToPrepare(time_to_prepare);
           setConfirmModal(true);
           setLoading(false);
         } else if (result.status === 401) {
-          console.log("Can't place order, following items not available: ", result.data.notAvailable);
+          console.log(
+            "Can't place order, following items not available: ",
+            result.data.notAvailable
+          );
           setNotAvailable(result.data.notAvailable);
           setErrorModal(true);
           setLoading(false);
@@ -235,6 +260,21 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     };
     handleUpdate();
   }, [cart, freeItems]);
+
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      const fetchedItems: MenuItem[] = await fetchAllItems();
+      const availableItems = fetchedItems.filter(
+        (item) => item.available && item.bestSeller && item.category !== "essentials"
+      );
+      setBestseller(availableItems);
+      setBestSellerLoading(false);
+    };
+    if (cartOpen) {
+      setBestSellerLoading(true);
+      fetchBestSellers();
+    }
+  }, [cartOpen]);
 
   return (
     <div className="font-montserrat min-h-screen  h-fit overflow-auto  py-2 bg-[#f5f6fb]">
@@ -415,7 +455,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
         <div className="p-2">
           <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full"></div>
           {placeOrderError && (
-            <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
+            <div className="p-2 mx-3 text-center text-red-600 text-sm">
+              At least add 1 item to place an order
+            </div>
           )}
           <button
             disabled={loading}
@@ -508,7 +550,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="flex flex-col h-32 items-center overflow-hidden ">
               <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
             </div>
-            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">Your Order has been placed!</div>
+            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">
+              Your Order has been placed!
+            </div>
             <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
               Expected Waiting Time {timeToPrepare} mins
             </div>

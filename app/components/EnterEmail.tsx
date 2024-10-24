@@ -6,6 +6,7 @@ import { CircularProgress, Snackbar } from "@mui/joy";
 import { Close, Info } from "@mui/icons-material";
 import { setAuthCustomer } from "../actions/cookie";
 import { createToken } from "../actions/util";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type Booking = {
   booking_id: string;
@@ -77,6 +78,7 @@ function EnterEmail({
         onSubmit={(e) => {
           e.preventDefault();
           handleSubmit();
+          sendGAEvent('event', 'login', { value: email})
         }}
       >
         <Field className="mx-4 my-8">

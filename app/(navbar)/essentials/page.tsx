@@ -9,6 +9,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Cart from "./EssentialCart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEssentialsCart } from "@/lib/EssentialsCartContext";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type MenuItem = {
   available: boolean;
@@ -186,6 +187,7 @@ function Essentials() {
         <div className="sticky bottom-20 rounded-2xl cursor-pointer z-50 bg-red-500 font-semibold text-center w-[95%] mx-auto text-white py-4">
           <div
             onClick={() => {
+              sendGAEvent('event', 'openCartEssentials', { value: cartOpen })
               setCartOpen(true);
             }}
           >
