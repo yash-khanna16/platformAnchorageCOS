@@ -460,7 +460,10 @@ function Home() {
           <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse rounded-2xl"></div>
           <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse rounded-2xl"></div>
           {[1, 2, 3, 4, 5, 6, 7].map((element: number) => (
-            <div key={element} className="flex rounded-2xl justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse">
+            <div
+              key={element}
+              className="flex rounded-2xl justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse"
+            >
               <div>
                 <div className="mt-2 rounded-2xl bg-gray-200 w-44 h-6"></div>
                 <div className="w-10 rounded-2xl h-5 bg-gray-200 my-3 "></div>
