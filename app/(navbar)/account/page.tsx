@@ -18,7 +18,7 @@ import { star, starSmall, starUnfilled, starUnfilledSmall } from "@/app/assets/i
 import { BookingInfoType } from "../timeline/page";
 import happy from "@/app/assets/happy.json";
 import Lottie from "lottie-react";
-import { sendGAEvent } from '@next/third-parties/google'
+import { sendGAEvent } from "@next/third-parties/google";
 
 type ProfileData = {
   name: string;
@@ -32,6 +32,7 @@ type OrderType = {
   orderStatus: string;
   feedback: string | null;
   rating: number;
+  discount: number;
   items: {
     itemDescription: string;
     itemId: string;
@@ -69,7 +70,7 @@ function Account() {
   const [feedback, setFeedback] = useState(false);
   const [ratingStay, setRatingStay] = useState(0);
   const [commentStay, setCommentStay] = useState("");
-
+  const platformFee = 2;
   const router = useRouter();
   const categories: string[] = ["Food", "Essentials"];
   const [selected, setSelected] = useState("Food");
@@ -95,7 +96,7 @@ function Account() {
       price: item.itemPrice,
       time_to_prepare: 0,
       type: item.itemType,
-      quantity: item.itemQty,
+      qty: item.itemQty,
     }));
     console.log("items to add: ", itemsToAdd);
 
@@ -123,24 +124,12 @@ function Account() {
   };
 
   const star = (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="#f3d00c"
-      width={50}
-      height={50}
-      viewBox="0 0 576 512"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="#f3d00c" width={50} height={50} viewBox="0 0 576 512">
       <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
     </svg>
   );
   const starUnfilled = (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="#dbdbdb"
-      width={50}
-      height={50}
-      viewBox="0 0 576 512"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="#dbdbdb" width={50} height={50} viewBox="0 0 576 512">
       <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
     </svg>
   );
@@ -178,12 +167,8 @@ function Account() {
         const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
         const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
         console.log(activeOrders);
-        const pastFoodData = pastOrders.filter(
-          (order) => order.items[0].itemCategory !== "essentials"
-        );
-        const pastEssentails = pastOrders.filter(
-          (order) => order.items[0].itemCategory === "essentials"
-        );
+        const pastFoodData = pastOrders.filter((order) => order.items[0].itemCategory !== "essentials");
+        const pastEssentails = pastOrders.filter((order) => order.items[0].itemCategory === "essentials");
         setPastFood(pastFoodData);
         setPastEssentials(pastEssentails);
         setActive(activeOrders);
@@ -245,9 +230,7 @@ function Account() {
         const pastOrders = orders.filter((order) => order.orderStatus === "Delivered");
         const activeOrders = orders.filter((order) => order.orderStatus === "Placed");
         const pastFood = pastOrders.filter((order) => order.items[0].itemCategory !== "essentials");
-        const pastEssentails = pastOrders.filter(
-          (order) => order.items[0].itemCategory === "essentials"
-        );
+        const pastEssentails = pastOrders.filter((order) => order.items[0].itemCategory === "essentials");
         setPastFood(pastFood);
         setPastEssentials(pastEssentails);
         setActive(activeOrders);
@@ -286,9 +269,7 @@ function Account() {
       <div className="sticky shadow-md top-0 z-10 bg-white  ">
         <div className="flex justify-between mb-1 pt-4 p-2 items-center">
           <Image src={Logo} alt="Logo" width={36} height={36} />
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
-            Room: {room}{" "}
-          </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">Room: {room} </div>
         </div>
       </div>
       {!skeleton ? (
@@ -304,9 +285,7 @@ function Account() {
             </div>
             <div className="ml-5 w-9/12 my-auto">
               <div className="capitalize text-2xl font-medium text-red-500">{profileData.name}</div>
-              <div className="mt-2 break-words text-gray-500 font-medium text-sm">
-                {profileData.email}
-              </div>
+              <div className="mt-2 break-words text-gray-500 font-medium text-sm">{profileData.email}</div>
             </div>
           </div>
           <div className="my-4 mx-3 text-xs font-medium  text-red-500">ACTIVE ORDERS</div>
@@ -316,10 +295,7 @@ function Account() {
             ) : (
               <div>
                 {active.map((order) => (
-                  <div
-                    key={order.orderId}
-                    className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg"
-                  >
+                  <div key={order.orderId} className="border-b-2 border-dashed  border-gray-300 pb-5 p-3 mb-2 rounded-lg">
                     <div className="space-y-2 flex mb-3 font-light justify-between">
                       <div className="text-xs">
                         <span className="">{formatDate(order.orderedOn)}</span>
@@ -334,7 +310,7 @@ function Account() {
                     </div>
                     <div className="mt-2">
                       {order.items.map((item) => (
-                        <div key={item.itemId} className="text-sm flex justify-between  py-2 ">
+                        <div key={item.itemId} className="text-sm flex justify-between font-medium py-1 text-slate-600 ">
                           <div className="flex">
                             <div className="flex space-x-2 items-center">
                               <div>
@@ -345,19 +321,34 @@ function Account() {
                                   src={item.itemType === "veg" ? veg.src : nonveg.src}
                                 />
                               </div>
-                              <div> {item.itemName}</div>
+                              <div className=""> {item.itemName}</div>
                             </div>
                             <span className="mx-1 text-gray-800"> x {item.itemQty}</span>
                           </div>
-                          <div className="text-gray-900">₹ {item.itemPrice * item.itemQty}</div>
+                          <div className="">₹ {item.itemPrice * item.itemQty}</div>
                         </div>
                       ))}
-                      <div className="mt-3 flex font-medium text-gray-700 justify-between">
-                        Total:{" "}
-                        <span className="text-red-500  ">
-                          {" "}
-                          ₹ {calculateTotal(order.items).toFixed(2)}
-                        </span>
+                      <div className="text-sm my-3 space-y-1 font-medium text-slate-500">
+                        <div className="flex justify-between">
+                          SubTotal
+                          <span className=" ">₹{calculateTotal(order.items).toFixed(2)}</span>
+                        </div>
+                        {order.discount > 0 && (
+                          <div className="flex justify-between">
+                            Discount
+                            <span className=" ">₹{order.discount}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          Platform Fee
+                          <span className=" ">₹{platformFee}</span>
+                        </div>
+                        <div className="flex justify-between text-red-600">
+                          Total
+                          <span className=" ">
+                            ₹{Number(calculateTotal(order.items).toFixed(2)) - order.discount + platformFee}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex w-full mt-4 space-x-3 ">
@@ -392,20 +383,20 @@ function Account() {
           </div>
           <div className="pb-4 mt-4 mx-3 text-xs font-medium  text-red-500">YOUR ORDERS</div>
           <div className="bg-white pt-5">
-          {categories.map((element, index) => (
-            <span
-              key={index}
-              className={`${
-                selected === element ? "text-red-600 border-red-400" : ""
-              } capitalize border-b-2  bg-white font-medium  mx-3 cursor-pointer`}
-              onClick={() => {
-                sendGAEvent('event', 'pastOrdertType', { value: element })
-                setSelected(element);
-              }}
-            >
-              {element}
-            </span>
-          ))}
+            {categories.map((element, index) => (
+              <span
+                key={index}
+                className={`${
+                  selected === element ? "text-red-600 border-red-400" : ""
+                } capitalize border-b-2  bg-white font-medium  mx-3 cursor-pointer`}
+                onClick={() => {
+                  sendGAEvent("event", "pastOrdertType", { value: element });
+                  setSelected(element);
+                }}
+              >
+                {element}
+              </span>
+            ))}
           </div>
           <div className="bg-white px-3 py-1">
             {selected === "Food" ? (
@@ -414,10 +405,7 @@ function Account() {
               ) : (
                 <div className="mt-2">
                   {pastFood.map((order) => (
-                    <div
-                      key={order.orderId}
-                      className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg"
-                    >
+                    <div key={order.orderId} className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg">
                       <div className="space-y-2 flex mb-3 font-light justify-between">
                         <div className="text-xs">
                           <span className="">{formatDate(order.orderedOn)}</span>
@@ -432,7 +420,7 @@ function Account() {
                       </div>
                       <div className="mt-2">
                         {order.items.map((item) => (
-                          <div key={item.itemId} className="text-sm flex justify-between  py-2 ">
+                          <div key={item.itemId} className="text-sm flex justify-between text-slate-600 font-medium  py-1 ">
                             <div className="flex">
                               <div className="flex space-x-2 items-center">
                                 <div>
@@ -447,15 +435,30 @@ function Account() {
                               </div>
                               <span className="mx-1 text-gray-800"> x {item.itemQty}</span>
                             </div>
-                            <div className="text-gray-900">₹ {item.itemPrice * item.itemQty}</div>
+                            <div className="">₹ {item.itemPrice * item.itemQty}</div>
                           </div>
                         ))}
-                        <div className="mt-3 flex font-medium text-gray-700 justify-between">
-                          Total:{" "}
-                          <span className="text-red-500  ">
-                            {" "}
-                            ₹ {calculateTotal(order.items).toFixed(2)}
-                          </span>
+                        <div className="text-sm my-3 space-y-1 font-medium text-slate-500">
+                          <div className="flex justify-between">
+                            SubTotal
+                            <span className=" ">₹{calculateTotal(order.items).toFixed(2)}</span>
+                          </div>
+                          {order.discount > 0 && (
+                            <div className="flex justify-between">
+                              Discount
+                              <span className=" ">₹{order.discount}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            Platform Fee
+                            <span className=" ">₹{platformFee}</span>
+                          </div>
+                          <div className="flex justify-between text-red-600">
+                            Total
+                            <span className=" ">
+                              ₹{Number(calculateTotal(order.items).toFixed(2)) - order.discount + platformFee}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex w-full mt-4 space-x-3 ">
@@ -486,10 +489,7 @@ function Account() {
             ) : (
               <div className="mt-2">
                 {pastEssentails.map((order) => (
-                  <div
-                    key={order.orderId}
-                    className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg"
-                  >
+                  <div key={order.orderId} className="border-b-2 border-dashed  border-gray-300 pb-5 py-3 mb-2 rounded-lg">
                     <div className="space-y-2 flex mb-3 font-light justify-between">
                       <div className="text-xs">
                         <span className="">{formatDate(order.orderedOn)}</span>
@@ -523,11 +523,7 @@ function Account() {
                         </div>
                       ))}
                       <div className="mt-3 flex font-medium text-gray-700 justify-between">
-                        Total:{" "}
-                        <span className="text-red-500  ">
-                          {" "}
-                          ₹ {calculateTotal(order.items).toFixed(2)}
-                        </span>
+                        Total: <span className="text-red-500  "> ₹ {calculateTotal(order.items).toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="flex w-full mt-4 space-x-3 ">
@@ -601,10 +597,7 @@ function Account() {
         >
           <ArrowBackIosNew fontSize="small" />
         </div>
-        <div
-          className="px-4 py-2 font-montserrat flex items-center justify-center"
-          style={{ height: "100vh" }}
-        >
+        <div className="px-4 py-2 font-montserrat flex items-center justify-center" style={{ height: "100vh" }}>
           {!submitted && (
             <div className="space-y-6 -mt-12 text-center ">
               <div className="text-2xl font-bold">How Was Your Meal?</div>
