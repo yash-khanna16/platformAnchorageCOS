@@ -96,11 +96,13 @@ export async function fetchAllItems() {
 export async function placeOrder(dataSend: {
   order_id: string;
   booking_id: string;
-  room: string|null;
+  room: string | null;
   remarks: string;
   created_at: string;
   status: string;
+  email: string;
   items: { item_id: string; qty: number }[];
+  coupon_id: string|null;
 }) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
@@ -109,19 +111,19 @@ export async function placeOrder(dataSend: {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({orderDetails:dataSend}),
+      body: JSON.stringify({ orderDetails: dataSend }),
       cache: "no-cache",
     });
 
     const data = await response.json(); // Parse the JSON response
     if (!response.ok) {
       if (response.status === 401) {
-        return {status: 401, data: data}
+        return { status: 401, data: data };
       }
       const error = new Error(await response.text());
       throw error;
     }
-    return {status: response.status, data:data};
+    return { status: response.status, data: data };
   } catch (error) {
     console.log(error);
     throw error;
@@ -135,7 +137,7 @@ export async function fetchBookingData(bookingId: string) {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        bookingid:bookingId
+        bookingid: bookingId,
       },
       cache: "no-cache",
     });
@@ -159,7 +161,7 @@ export async function fetchOrdersByBookingId(bookingId: string) {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        bookingid:bookingId
+        bookingid: bookingId,
       },
       cache: "no-cache",
     });
@@ -182,7 +184,7 @@ export async function fetchSchedule(bookingId: string) {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        bookingid:bookingId
+        bookingid: bookingId,
       },
       cache: "no-cache",
     });
@@ -207,7 +209,7 @@ export async function updateFeedback(rating: number, feedback: string, orderid: 
         "Content-Type": "application/json",
         orderid: orderid,
         rating: rating.toString(),
-        feedback: feedback
+        feedback: feedback,
       },
       cache: "no-cache",
     });
@@ -225,17 +227,17 @@ export async function updateFeedback(rating: number, feedback: string, orderid: 
 }
 export async function fetchFeedbackCOS(booking_id: string) {
   try {
-    console.log(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`)
+    console.log(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`);
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchFeedbackCOS`, {
       method: "GET",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        bookingid: booking_id
+        bookingid: booking_id,
       },
       cache: "no-cache",
     });
-    console.log("response of feedback: ", response)
+    console.log("response of feedback: ", response);
 
     const data = await response.json(); // Parse the JSON response
     if (!response.ok) {
@@ -248,7 +250,7 @@ export async function fetchFeedbackCOS(booking_id: string) {
     throw error;
   }
 }
-export async function insertFeedbackCOS(type: string, booking_id: string,rating: number, comment: string ) {
+export async function insertFeedbackCOS(type: string, booking_id: string, rating: number, comment: string) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/insertFeedbackCOS`, {
       method: "POST",
@@ -256,7 +258,7 @@ export async function insertFeedbackCOS(type: string, booking_id: string,rating:
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({type: type, bookingid: booking_id, rating: rating, comment: comment}),
+      body: JSON.stringify({ type: type, bookingid: booking_id, rating: rating, comment: comment }),
       cache: "no-cache",
     });
 
@@ -269,5 +271,90 @@ export async function insertFeedbackCOS(type: string, booking_id: string,rating:
   } catch (error) {
     console.log(error);
     throw error;
+  }
+}
+export async function fetchAllCoupons() {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchAllCoupons`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function validateCoupon(
+  email: string,
+  coupon_id: string,
+  cart: {
+    items: { item_id: string; qty: number }[];
+  }
+) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/validateCoupon`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        coupon_id: coupon_id,
+        cart: cart,
+      }),
+      cache: "no-cache",
+    });
+
+    const responseBody = await response.text(); // Read the response body as text first
+
+    // Attempt to parse the response as JSON
+    let data;
+    try {
+      data = JSON.parse(responseBody);
+    } catch (jsonError) {
+      // Handle cases where the response is not JSON
+      return {
+        success: false,
+        message: "Oops! Something went wrong. Please try again later.",
+      };
+    }
+
+    // Check if the response was okay
+    if (!response.ok) {
+      if (response.status === 405) {
+        return {
+          success: false,
+          message: data.message, // Use the response body directly for the message
+        };
+      } else {
+        return {
+          success: false,
+          message: "Internal Server Error",
+        };
+      }
+    }
+    return {
+      success: true,
+      data: data,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "A network error occurred. Please try again later.",
+    };
   }
 }

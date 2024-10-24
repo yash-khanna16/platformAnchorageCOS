@@ -106,6 +106,7 @@ function Home() {
     const getItems = async () => {
       try {
         const fetchedItems: MenuItem[] = await fetchAllItems();
+        console.log("items: ", fetchedItems)
         const availableItems = fetchedItems.filter((item) => item.available);
 
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
@@ -156,10 +157,10 @@ function Home() {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
         );
       } else {
-        return [...prevSelected, { ...item, quantity: 1 }];
+        return [...prevSelected, { ...item, qty: 1 }];
       }
     });
   };
@@ -167,9 +168,9 @@ function Home() {
   const handleRemoveItem = (item: MenuItem) => {
     setCart((prevSelected) => {
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
-      if (existingItem && existingItem.quantity > 1) {
+      if (existingItem && existingItem.qty > 1) {
         return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty - 1 } : cartItem
         );
       } else {
         return prevSelected.filter((cartItem) => cartItem.item_id !== item.item_id);
@@ -325,7 +326,7 @@ function Home() {
                             <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
                               <Remove fontSize="small" />
                             </button>
-                            {selectedItem.quantity}
+                            {selectedItem.qty}
                             <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
                               <Add fontSize="small" />
                             </button>

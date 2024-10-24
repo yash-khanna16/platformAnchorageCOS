@@ -11,7 +11,7 @@ export type CartType = {
   price: number;
   time_to_prepare: number;
   type: string;
-  quantity: number;
+  qty: number;
 }[];
 
 // Define the context's type
