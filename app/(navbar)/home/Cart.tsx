@@ -1,4 +1,14 @@
-import { Add, ArrowForward, Cancel, CancelRounded, Close, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
+import {
+  Add,
+  ArrowForward,
+  AutoAwesome,
+  Cancel,
+  CancelRounded,
+  Close,
+  CurrencyRupee,
+  Remove,
+  ShoppingCart,
+} from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import React, { useEffect, useRef, useState } from "react";
@@ -13,7 +23,10 @@ import { useCart } from "@/lib/CartContext";
 import Lottie from "lottie-react";
 import animationData from "../../assets/tick.json";
 import { CircularProgress } from "@mui/joy";
-import { sendGAEvent } from '@next/third-parties/google'
+import { sendGAEvent } from "@next/third-parties/google";
+import { fetchAllItems } from "@/app/actions/api";
+import Veg from "../../assets/veg.png";
+import Nonveg from "../../assets/nonveg.png";
 
 type DataType = {
   available: boolean;
@@ -24,6 +37,20 @@ type DataType = {
   price: number;
   time_to_prepare: number;
   type: string;
+};
+
+type MenuItem = {
+  available: boolean;
+  category: string;
+  description: string;
+  item_id: string;
+  name: string;
+  price: number;
+  time_to_prepare: number;
+  type: string;
+  category_id: string;
+  sequence: number;
+  bestSeller: boolean;
 };
 
 type CartType = DataType & {
@@ -47,10 +74,14 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [confirmModal, setConfirmModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [timeToPrepare, setTimeToPrepare] = useState(0);
-  const [notAvailable, setNotAvailable] = useState<{ item_id: string; name: string; available: boolean }[]>([]);
+  const [notAvailable, setNotAvailable] = useState<
+    { item_id: string; name: string; available: boolean }[]
+  >([]);
+  const [bestSellerLoading, setBestSellerLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const searchParams = useSearchParams();
+  const [bestSeller, setBestseller] = useState<MenuItem[]>([]);
   const { cart, setCart } = useCart();
   const router = useRouter();
 
@@ -72,20 +103,24 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           status: "Placed",
           items: items,
         };
-        sendGAEvent('event', 'placedOrder', { value: dataSend })
+        sendGAEvent("event", "placedOrder", { value: dataSend });
         console.log(dataSend);
         const result = await placeOrder(dataSend);
         console.log(result);
         if (result.status === 200) {
           let time_to_prepare = 0;
           result.data.details.items.forEach((element: any) => {
-            time_to_prepare = time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
+            time_to_prepare =
+              time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
           });
           setTimeToPrepare(time_to_prepare);
           setConfirmModal(true);
           setLoading(false);
         } else if (result.status === 401) {
-          console.log("Can't place order, following items not available: ", result.data.notAvailable);
+          console.log(
+            "Can't place order, following items not available: ",
+            result.data.notAvailable
+          );
           setNotAvailable(result.data.notAvailable);
           setErrorModal(true);
           setLoading(false);
@@ -105,7 +140,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
       const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevCart.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+          cartItem.item_id === item.item_id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
         );
       } else {
         return [...prevCart, { ...item, quantity: 1 }];
@@ -118,7 +155,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
       const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem && existingItem.quantity > 1) {
         return prevCart.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
+          cartItem.item_id === item.item_id
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
         );
       } else {
         return prevCart.filter((cartItem) => cartItem.item_id !== item.item_id);
@@ -137,6 +176,21 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     setTotal(totalAmount);
   }, [cart]);
 
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      const fetchedItems: MenuItem[] = await fetchAllItems();
+      const availableItems = fetchedItems.filter(
+        (item) => item.available && item.bestSeller && item.category !== "essentials"
+      );
+      setBestseller(availableItems);
+      setBestSellerLoading(false);
+    };
+    if (cartOpen) {
+      setBestSellerLoading(true);
+      fetchBestSellers();
+    }
+  }, [cartOpen]);
+
   return (
     <div className="font-montserrat py-2">
       <div style={{ height: "100vh" }}>
@@ -153,7 +207,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 }}
               />
             </div>
-            <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCartOpen(!cartOpen)} />
+            <Close
+              sx={{ color: "#111" }}
+              className="relative top-0.5"
+              onClick={() => setCartOpen(!cartOpen)}
+            />
           </div>
         </div>
         <div className="p-3 text-2xl font-semibold border-b border-dashed ">Your Cart</div>
@@ -180,7 +238,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               {expandedId === item.item_id ? (
                 <div>
                   {item.description}{" "}
-                  <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                  <button
+                    className="font-medium text-red-500"
+                    onClick={() => toggleExpand(item.item_id)}
+                  >
                     show less
                   </button>
                 </div>
@@ -188,7 +249,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 <div>
                   {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
                   {item.description.length > 10 && (
-                    <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                    <button
+                      className="font-medium text-red-500"
+                      onClick={() => toggleExpand(item.item_id)}
+                    >
                       read more
                     </button>
                   )}
@@ -212,7 +276,67 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
         >
           Add a note for the restaurant
         </button>
-        {noteError && <div className="p-2 mx-3 text-red-600 text-sm">At least add 1 item to add a note for the restaurant</div>}
+        {noteError && (
+          <div className="p-2 mx-3 text-red-600 text-sm">
+            At least add 1 item to add a note for the restaurant
+          </div>
+        )}
+        <div className="px-2 py-3 text-red-500 text-sm">
+          <AutoAwesome className="relative -top-0.5" style={{ height: "18" }} />
+          BestSellers
+          {bestSellerLoading ? (
+            <div className="text-sm flex space-x-3 overflow-x-scroll hide-scrollbar font-medium text-gray-600">
+              {[1, 2, 3].map((element: number) => (
+                <div
+                  key={element}
+                  className="text-xs rounded-md border w-52 flex-shrink-0 flex flex-col justify-between p-2 animate-pulse"
+                >
+                  <div>
+                    <div className="h-4 bg-gray-100"></div>
+                    <div className="h-10 mt-2 bg-gray-100"></div>
+                    <div className="flex mt-2 justify-between">
+                      <div className="w-7 h-5 bg-gray-100"></div>
+                      <div className="w-12 h-5 bg-gray-100"></div>{" "}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm flex space-x-3 overflow-x-scroll hide-scrollbar font-medium text-gray-600">
+              {bestSeller.map((item: MenuItem) => (
+                <div
+                  key={item.item_id}
+                  className="text-xs rounded-md border w-52 flex-shrink-0 flex flex-col justify-between p-2 "
+                >
+                  <div>
+                    <div className="font-semibold text-sm">
+                      <Image
+                        src={item.type === "veg" ? Veg : Nonveg}
+                        alt={item.type}
+                        className="inline relative mr-1 -top-0.5"
+                        height={15}
+                        width={15}
+                      />
+
+                      {item.name}
+                    </div>
+                    <div className="mt-2">{item.description}</div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-xs">₹ {item.price}</div>
+                    <button
+                      onClick={() => handleAddItem(item)}
+                      className="relative border-red-500 border w-fit py-1 px-2 text-red-500 rounded-lg bg-red-50"
+                    >
+                      ADD
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="p-3 font-medium flex justify-between text-lg pb-24">
           <span>Total :</span>
           <span>₹ {total}</span>
@@ -220,7 +344,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
 
         <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full">
           {placeOrderError && (
-            <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
+            <div className="p-2 mx-3 text-center text-red-600 text-sm">
+              At least add 1 item to place an order
+            </div>
           )}
           <button
             disabled={loading}
@@ -313,7 +439,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="flex flex-col h-32 items-center overflow-hidden ">
               <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
             </div>
-            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">Your Order has been placed!</div>
+            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">
+              Your Order has been placed!
+            </div>
             <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
               Expected Waiting Time {timeToPrepare} mins
             </div>
@@ -327,7 +455,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               }}
               className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
             >
-              Explore Journey<ArrowForward />
+              Explore Journey
+              <ArrowForward />
             </button>
             {/* <div className="flex justify-between">
               <div className=" capitalize">Item</div>
@@ -365,7 +494,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             {notAvailable.map((item_not_available, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item_not_available.name}</div>
-                <div className="mr-2">{cart.find((item) => item.item_id === item_not_available.item_id)?.quantity}</div>
+                <div className="mr-2">
+                  {cart.find((item) => item.item_id === item_not_available.item_id)?.quantity}
+                </div>
               </div>
             ))}
             <div className="mt-6 text-sm">Please try removing the above items and try again</div>
