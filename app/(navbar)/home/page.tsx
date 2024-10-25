@@ -569,9 +569,9 @@ function Home() {
                       <div className="flex justify-between items-center">
                         <div className="my-2">
                           {item.bestSeller && (
-                            <span className=" border-red-500 p-0.5 border bg-yellow-50 text-sm font-medium rounded-md text-red-600">
+                            <span className=" border-red-500 p-1 px-2 border bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
                               <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
-                              Bestseller
+                              <span className="ml-1">Bestseller</span>
                             </span>
                           )}
                           <div className="flex items-center mt-1">
