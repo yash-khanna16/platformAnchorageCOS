@@ -1,4 +1,4 @@
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, Error } from "@mui/icons-material";
 import { CircularProgress, Modal, ModalClose, ModalDialog, Sheet, Snackbar, Typography } from "@mui/joy";
 import React, { useEffect, useState } from "react";
 import { Coupon } from "./ApplyCoupon";
@@ -21,7 +21,7 @@ function CouponSelector({
   setCouponCode: React.Dispatch<React.SetStateAction<string>>;
   couponCode: string;
   setCouponDialog: React.Dispatch<React.SetStateAction<boolean>>;
-  discount: number,
+  discount: number;
   setDiscount: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [couponLoading, setCouponLoading] = useState(false);
@@ -29,6 +29,7 @@ function CouponSelector({
   const { freeItems, setFreeItems } = useFreeItems();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [successModal, setSuccessModal] = useState(false);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -49,22 +50,22 @@ function CouponSelector({
           };
         });
         const auth = await getAuthCustomer();
-        const email = auth?.guest_email as string || "";
+        const email = (auth?.guest_email as string) || "";
         const res = await validateCoupon(email, couponId, { items: modifiedCart });
         if (!res.success) {
           setOpen(true);
           setMessage(res.message);
         } else {
           // console.log("validated coupon: ", res);
+          setSuccessModal(true);
           setDiscount(res.data.discount);
-          setFreeItems(res.data.freeItems)
+          setFreeItems(res.data.freeItems);
           setCouponDialog(false);
-          setValidatedCoupon(couponCode)
-          
+          setValidatedCoupon(couponCode);
         }
       } else {
         setOpen(true);
-        setMessage("Invalid Code");
+        setMessage("Invalid Coupon Code");
       }
 
       setCouponLoading(false);
@@ -135,19 +136,36 @@ function CouponSelector({
       <Modal
         aria-labelledby="modal-title"
         aria-describedby="modal-desc"
+        open={successModal}
+        onClose={() => setSuccessModal(false)}
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
+          <div className="font-medium text-sm text-center text-slate-600 ">
+
+            <div className=""> {"'"}{couponCode}{"'"} applied </div>
+          </div>
+          
+            <div className="font-semibold text-slate-900 text-xl text-center">₹{discount} saved with this coupon</div>
+          <button onClick={()=>{setSuccessModal(false)}} className="w-full hover:bg-red-600 bg-red-500 rounded-2xl text-white p-3 font-semibold">LESS GOOO!!!</button>
+        </ModalDialog>
+      </Modal>
+      <Modal
+        aria-labelledby="modal-title"
+        aria-describedby="modal-desc"
         open={open}
         onClose={() => setOpen(false)}
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <Sheet variant="outlined" sx={{ width: 300, borderRadius: "md", p: 3, boxShadow: "lg" }}>
-          <ModalClose variant="plain" sx={{ m: 1 }} />
-          <Typography component="h2" id="modal-title" level="h4" textColor="inherit" sx={{ fontWeight: "lg", mb: 1 }}>
-            Coupon
-          </Typography>
-          <Typography id="modal-desc" textColor="text.tertiary">
-            <div className="capitalize">{message}</div>
-          </Typography>
-        </Sheet>
+        <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
+          <div className="font-semibold text- text-slate-600 flex gap-x-3 items-center">
+            <div>
+              <Error className="text-red-600" fontSize="large" />
+            </div>
+            <div className="">{message}</div>
+          </div>
+          <button onClick={()=>{setOpen(false)}} className="w-full hover:bg-red-600 mt-2 bg-red-500 rounded-2xl text-white p-3 font-semibold">OKAY</button>
+        </ModalDialog>
       </Modal>
     </div>
   );
