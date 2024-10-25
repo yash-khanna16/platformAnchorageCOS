@@ -95,7 +95,7 @@ function Account() {
       price: item.itemPrice,
       time_to_prepare: 0,
       type: item.itemType,
-      quantity: item.itemQty,
+      qty: item.itemQty,
     }));
     console.log("items to add: ", itemsToAdd);
 
