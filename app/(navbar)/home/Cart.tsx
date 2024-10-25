@@ -1,19 +1,23 @@
-import { Add, ArrowForward, Cancel, CancelRounded, Close, CurrencyRupee, Remove, ShoppingCart } from "@mui/icons-material";
+import { Add, ArrowForward, AutoAwesome, Cancel, Close, KeyboardArrowDown, Remove } from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import React, { useEffect, useRef, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import LoginPage from "../../components/Login";
 import { getAuthCustomer } from "@/app/actions/cookie";
-import { placeOrder } from "@/app/actions/api";
+import { fetchAllCoupons, placeOrder, validateCoupon } from "@/app/actions/api";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Modal, ModalClose, ModalDialog, DialogContent } from "@mui/joy";
-import { CheckCircle } from "@mui/icons-material";
+import { Modal, ModalClose, ModalDialog, DialogContent, Input } from "@mui/joy";
 import { useCart } from "@/lib/CartContext";
 import Lottie from "lottie-react";
 import animationData from "../../assets/tick.json";
 import { CircularProgress } from "@mui/joy";
-import { sendGAEvent } from '@next/third-parties/google'
+import { sendGAEvent } from "@next/third-parties/google";
+import { fetchAllItems } from "@/app/actions/api";
+import ApplyCoupon, { Coupon } from "./ApplyCoupon";
+import { useFreeItems } from "@/lib/FreeCartContext";
+import Veg from "../../assets/veg.png";
+import Nonveg from "../../assets/nonveg.png";
 
 type DataType = {
   available: boolean;
@@ -26,8 +30,22 @@ type DataType = {
   type: string;
 };
 
+type MenuItem = {
+  available: boolean;
+  category: string;
+  description: string;
+  item_id: string;
+  name: string;
+  price: number;
+  time_to_prepare: number;
+  type: string;
+  category_id: string;
+  sequence: number;
+  bestSeller: boolean;
+};
+
 type CartType = DataType & {
-  quantity: number;
+  qty: number;
 };
 
 type CartPropsType = {
@@ -48,11 +66,75 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [errorModal, setErrorModal] = useState(false);
   const [timeToPrepare, setTimeToPrepare] = useState(0);
   const [notAvailable, setNotAvailable] = useState<{ item_id: string; name: string; available: boolean }[]>([]);
+  const [bestSellerLoading, setBestSellerLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
-  const searchParams = useSearchParams();
+  const [discount, setDiscount] = useState<number>(0);
+  const [showTotal, setShowTotal] = useState(false);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [validatedCoupon, setValidatedCoupon] = useState("");
   const { cart, setCart } = useCart();
+  const { freeItems, setFreeItems } = useFreeItems();
+  const searchParams = useSearchParams();
+  const [bestSeller, setBestseller] = useState<MenuItem[]>([]);
+  const platformFee = 2;
   const router = useRouter();
+
+  useEffect(() => {
+    fetchAllCoupons()
+      .then((res) => {
+        console.log("res: ", res);
+        setCoupons(res);
+      })
+      .catch((error) => {
+        console.log("Error fetching coupons");
+      });
+  }, []);
+
+  const validateCouponCode = async () => {
+    try {
+      setCouponLoading(true);
+
+      // await sleep(1000);
+
+      const couponId = coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id;
+      console.log("coupons: ", coupons);
+      console.log("coupon id, ", couponId);
+      if (couponId) {
+        const modifiedCart = cart.map((cartItem) => {
+          return {
+            item_id: cartItem.item_id,
+            qty: cartItem.qty,
+          };
+        });
+
+        const auth = await getAuthCustomer();
+        const email = (auth?.guest_email as string) || "";
+        const res = await validateCoupon(email, couponId, { items: modifiedCart });
+        if (!res.success) {
+          setDiscount(0);
+          setFreeItems([]);
+          setValidatedCoupon("");
+        } else {
+          // console.log("validated coupon: ", res);
+          setDiscount(res.data.discount);
+          setFreeItems(res.data.freeItems);
+        }
+      } else {
+        setFreeItems([]);
+        setValidatedCoupon("");
+        setDiscount(0);
+      }
+      setCouponLoading(false);
+    } catch (error) {
+      console.log(error);
+      setValidatedCoupon("");
+      setFreeItems([]);
+      setDiscount(0);
+      setCouponLoading(false);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -60,9 +142,21 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     if (auth) {
       try {
         const room = searchParams.get("room");
-        const items = cart.map((item: CartType) => {
-          return { item_id: item.item_id, qty: item.quantity };
+        const itemMap = new Map<string, number>();
+
+        cart.forEach((item: CartType) => {
+          itemMap.set(item.item_id, (itemMap.get(item.item_id) || 0) + item.qty);
         });
+
+        freeItems.forEach((freeItem: CartType) => {
+          itemMap.set(freeItem.item_id, (itemMap.get(freeItem.item_id) || 0) + freeItem.qty);
+        });
+        const items = Array.from(itemMap.entries()).map(([item_id, qty]) => ({
+          item_id,
+          qty,
+        }));
+
+        const couponId = coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id || null;
         const dataSend = {
           order_id: "",
           booking_id: auth.booking_id as string,
@@ -71,8 +165,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           created_at: "",
           status: "Placed",
           items: items,
+          coupon_id: couponId,
+          email: auth.guest_email as string,
         };
-        sendGAEvent('event', 'placedOrder', { value: dataSend })
+        sendGAEvent("event", "placedOrder", { value: dataSend });
         console.log(dataSend);
         const result = await placeOrder(dataSend);
         console.log(result);
@@ -105,10 +201,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
       const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevCart.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
         );
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...prevCart, { ...item, qty: 1 }];
       }
     });
   };
@@ -116,9 +212,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const handleRemoveItem = (item: DataType) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
-      if (existingItem && existingItem.quantity > 1) {
+      if (existingItem && existingItem.qty > 1) {
         return prevCart.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem
+          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty - 1 } : cartItem
         );
       } else {
         return prevCart.filter((cartItem) => cartItem.item_id !== item.item_id);
@@ -127,104 +223,280 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   };
 
   useEffect(() => {
-    setNoteError(false);
-    setPlaceOrderError(false);
-    let totalAmount = 0;
-    cart.forEach((element) => {
-      totalAmount += element.price * element.quantity;
-    });
-    if (cart.length === 0) setCartOpen(false);
-    setTotal(totalAmount);
+    validateCouponCode();
   }, [cart]);
 
+  useEffect(() => {
+    const handleUpdate = async () => {
+      setNoteError(false);
+      setPlaceOrderError(false);
+      let totalAmount = 0;
+      cart.forEach((element) => {
+        totalAmount += element.price * element.qty;
+      });
+      freeItems.forEach((element) => {
+        totalAmount += element.price * element.qty;
+      });
+      if (cart.length === 0) setCartOpen(false);
+      setTotal(totalAmount);
+    };
+    handleUpdate();
+  }, [cart, freeItems]);
+
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      const fetchedItems: MenuItem[] = await fetchAllItems();
+      const availableItems = fetchedItems.filter((item) => item.available && item.bestSeller && item.category !== "essentials");
+      setBestseller(availableItems);
+      setBestSellerLoading(false);
+    };
+    if (cartOpen) {
+      setBestSellerLoading(true);
+      fetchBestSellers();
+    }
+  }, [cartOpen]);
+
   return (
-    <div className="font-montserrat py-2">
-      <div style={{ height: "100vh" }}>
-        <div className="sticky top-0 z-10 bg-white border-b ">
-          <div className="flex justify-between mb-1 p-2 items-center">
-            <div className="flex items-end font-semibold text-2xl">
-              <Image
-                src={Logo}
-                alt="Logo"
-                width={36}
-                height={36}
-                onClick={() => {
-                  setCartOpen(!cartOpen);
-                }}
-              />
-            </div>
-            <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCartOpen(!cartOpen)} />
+    <div className="font-montserrat min-h-screen  h-fit overflow-auto  py-2 bg-[#f5f6fb]">
+      <div className="mb-28">
+        <div className="fixed w-full flex justify-between mb-1 p-2 items-center top-0 z-10 bg-white border-b ">
+          <div className="flex items-end font-semibold text-2xl">
+            <Image
+              src={Logo}
+              alt="Logo"
+              width={36}
+              height={36}
+              onClick={() => {
+                setCartOpen(!cartOpen);
+              }}
+            />
           </div>
+          <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCartOpen(!cartOpen)} />
         </div>
-        <div className="p-3 text-2xl font-semibold border-b border-dashed ">Your Cart</div>
+        <div className="bg-white m-2 shadow-md border mt-16 mb-4 rounded-2xl">
+          <div className="p-3 text-2xl mt-1 font-semibold border-b border-dashed ">Your Cart</div>
 
-        {cart.map((item: CartType) => (
-          <div key={item.item_id} className="p-3 border-b border-dashed">
-            <div className="flex text-base justify-between">
-              <div>
-                <div className="text-lg">{item.name}</div>
-                <div className="text-xs">₹ {item.price}</div>
-              </div>
+          <div className="m-2 rounded-2xl ">
+            {cart.map((item: CartType) => (
+              <div key={item.item_id} className="p-3  border-b border-dashed">
+                <div className="flex text-base justify-between">
+                  <div>
+                    <div className="text-lg font-medium">{item.name}</div>
+                    <div className="text-xs">₹ {item.price}</div>
+                  </div>
 
-              <div className="relative border-red-500 border w-20 h-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                <button onClick={() => handleRemoveItem(item)} className="absolute top-1 left-1">
-                  <Remove fontSize="small" />
-                </button>
-                {item.quantity}
-                <button onClick={() => handleAddItem(item)} className="absolute top-1 right-1">
-                  <Add fontSize="small" />
-                </button>
-              </div>
-            </div>
-            <div className="mt-1 text-xs flex justify-between">
-              {expandedId === item.item_id ? (
-                <div>
-                  {item.description}{" "}
-                  <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
-                    show less
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
-                  {item.description.length > 10 && (
-                    <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
-                      read more
+                  <div className="relative border-red-500 border w-20 h-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                    <button onClick={() => handleRemoveItem(item)} className="absolute top-1 left-1">
+                      <Remove fontSize="small" />
                     </button>
+                    {item.qty}
+                    <button onClick={() => handleAddItem(item)} className="absolute top-1 right-1">
+                      <Add fontSize="small" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-1 text-xs flex justify-between">
+                  {expandedId === item.item_id ? (
+                    <div>
+                      {item.description}{" "}
+                      <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                        show less
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
+                      {item.description.length > 10 && (
+                        <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                          read more
+                        </button>
+                      )}
+                    </div>
                   )}
+                  <div className="flex font-medium justify-end w-24 text-sm ml-2">
+                    <span>₹ {item.price * item.qty}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {freeItems.length > 0 && <div className="font-semibold  mt-3 mx-2 text-xl ">Free Items</div>}
+            {freeItems.map((item: CartType) => (
+              <div key={item.item_id} className="p-3  border-b border-dashed">
+                <div className="flex text-base justify-between">
+                  <div>
+                    <div className="text-lg font-medium">{item.name}</div>
+                    <div className="text-xs">₹ {item.price}</div>
+                  </div>
+
+                  <div className="relative border-red-500 border w-[82px] h-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                    {/* <button onClick={() => handleRemoveItem(item)} className="absolute top-1 left-1">
+                      <Remove fontSize="small" />
+                    </button> */}
+                    {item.qty}
+                    {/* <button onClick={() => handleAddItem(item)} className="absolute top-1 right-1">
+                      <Add fontSize="small" />
+                    </button> */}
+                  </div>
+                </div>
+                <div className="mt-1 text-xs flex justify-between">
+                  {expandedId === item.item_id ? (
+                    <div>
+                      {item.description}{" "}
+                      <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                        show less
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
+                      {item.description.length > 10 && (
+                        <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                          read more
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex font-medium justify-end w-24 text-sm ml-2">
+                    <span className="line-through">₹ {item.price * item.qty}</span> <span className="ml-2">₹ 0</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            className="text-xs p-2  rounded-lg mt-2 mb-4 mx-3 bg-white border"
+            onClick={() => {
+              if (cart.length > 0) {
+                setNote(!note);
+              } else {
+                setNoteError(true);
+              }
+            }}
+          >
+            Add a note for the restaurant
+          </button>
+        </div>
+
+        <div className="px-2 py-3 bg-white mx-2 rounded-2xl shadow-md text-red-500 text-sm">
+          <AutoAwesome className="relative -top-0.5 my-2 " style={{ height: "18" }} />
+         <span className="font-semibold">BestSellers</span>
+          {bestSellerLoading ? (
+            <div className="text-sm flex space-x-3 overflow-x-scroll hide-scrollbar font-medium text-gray-600">
+              {[1, 2, 3].map((element: number) => (
+                <div
+                  key={element}
+                  className="text-xs rounded-md border w-52 flex-shrink-0 flex flex-col justify-between p-2 animate-pulse"
+                >
+                  <div>
+                    <div className="h-4 bg-gray-100"></div>
+                    <div className="h-10 mt-2 bg-gray-100"></div>
+                    <div className="flex mt-2 justify-between">
+                      <div className="w-7 h-5 bg-gray-100"></div>
+                      <div className="w-12 h-5 bg-gray-100"></div>{" "}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm mx-1 flex space-x-3 overflow-x-scroll hide-scrollbar font-medium text-gray-600">
+              {bestSeller.map((item: MenuItem) => (
+                <div
+                  key={item.item_id}
+                  className="text-xs rounded-md border w-52 flex-shrink-0 flex flex-col justify-between p-2 "
+                >
+                  <div>
+                    <div className="font-semibold text-sm">
+                      <Image
+                        src={item.type === "veg" ? Veg : Nonveg}
+                        alt={item.type}
+                        className="inline relative mr-1 -top-0.5"
+                        height={15}
+                        width={15}
+                      />
+
+                      {item.name}
+                    </div>
+                    <div className="mt-2">{item.description}</div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-xs">₹ {item.price}</div>
+                    <button
+                      onClick={() => handleAddItem(item)}
+                      className="relative border-red-500 border w-fit py-1 px-2 text-red-500 rounded-lg bg-red-50"
+                    >
+                      ADD
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <ApplyCoupon
+          validatedCoupon={validatedCoupon}
+          setValidatedCoupon={setValidatedCoupon}
+          coupons={coupons}
+          discount={discount}
+          setDiscount={setDiscount}
+        />
+
+        {noteError && <div className="p-2 mx-3 text-red-600 text-sm">At least add 1 item to add a note for the restaurant</div>}
+        <div className="p-3 shadow-md border bg-white m-2 my-3 rounded-2xl font-medium text- ">
+          <div className="justify-between flex space-x-4 ">
+            <div className="flex space-x-3 items-center px-2">
+              <span>Total</span>
+              <span className="font-semibold space-x-2">
+                {discount === 0 && <span className="text-sm">₹ {total + platformFee}</span>}
+                {discount !== 0 && (
+                  <>
+                    <span className="line-through text-sm">₹ {total}</span>
+                    <span>₹ {total - discount + platformFee}</span>{" "}
+                  </>
+                )}
+              </span>
+            </div>
+            <div
+              onClick={() => {
+                setShowTotal(!showTotal);
+              }}
+              className="p-1 border rounded-full"
+            >
+              <KeyboardArrowDown className="text-gray-600" />
+            </div>
+          </div>
+          {showTotal && (
+            <div className="text-xs text-gray-600 mx-2 my-3 space-y-1">
+              <div className="flex justify-between">
+                <div>Items subtotal </div> <div>₹ {total}</div>
+              </div>
+              {platformFee > 0 && (
+                <div className="flex justify-between">
+                  <div>Platform Charges </div> <div>₹ {platformFee}</div>
                 </div>
               )}
-              <div className="flex justify-end w-24 text-sm ml-2">
-                <span>₹ {item.price * item.quantity}</span>
+
+              {discount > 0 && (
+                <div className="flex justify-between">
+                  <div>Discount ({validatedCoupon}) </div> <div>- ₹ {discount} </div>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <div>Total </div> <div>₹ {total - discount + platformFee} </div>
               </div>
             </div>
-          </div>
-        ))}
-        <button
-          className="text-xs p-2 rounded-lg mt-2 mx-3 border"
-          onClick={() => {
-            if (cart.length > 0) {
-              setNote(!note);
-            } else {
-              setNoteError(true);
-            }
-          }}
-        >
-          Add a note for the restaurant
-        </button>
-        {noteError && <div className="p-2 mx-3 text-red-600 text-sm">At least add 1 item to add a note for the restaurant</div>}
-        <div className="p-3 font-medium flex justify-between text-lg pb-24">
-          <span>Total :</span>
-          <span>₹ {total}</span>
+          )}
         </div>
-
-        <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full">
+        <div className="p-2">
+          <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full"></div>
           {placeOrderError && (
             <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
           )}
           <button
             disabled={loading}
-            className="p-3 border disabled:bg-opacity-90 text-xl flex items-center justify-center gap-x-3 font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
+            className="p-3 border  disabled:bg-opacity-90 text-xl flex items-center justify-center gap-x-3 font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
             onClick={() => {
               if (cart.length > 0) {
                 handlePlaceOrder();
@@ -327,7 +599,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               }}
               className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
             >
-              Explore Journey<ArrowForward />
+              Explore Journey
+              <ArrowForward />
             </button>
             {/* <div className="flex justify-between">
               <div className=" capitalize">Item</div>
@@ -336,7 +609,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             {cart.map((item: CartType, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item.name}</div>
-                <div className="mr-2">{item.quantity}</div>
+                <div className="mr-2">{item.qty}</div>
               </div>
             ))} */}
           </DialogContent>
@@ -365,7 +638,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             {notAvailable.map((item_not_available, index: number) => (
               <div key={index} className="flex justify-between border-b border-dashed">
                 <div className=" capitalize">{item_not_available.name}</div>
-                <div className="mr-2">{cart.find((item) => item.item_id === item_not_available.item_id)?.quantity}</div>
+                <div className="mr-2">{cart.find((item) => item.item_id === item_not_available.item_id)?.qty}</div>
               </div>
             ))}
             <div className="mt-6 text-sm">Please try removing the above items and try again</div>
