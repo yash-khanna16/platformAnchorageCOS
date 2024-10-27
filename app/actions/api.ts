@@ -273,13 +273,14 @@ export async function insertFeedbackCOS(type: string, booking_id: string, rating
     throw error;
   }
 }
-export async function fetchAllCoupons() {
+export async function fetchAllCoupons(email: string) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchAllCoupons`, {
       method: "GET",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
+        email: email
       },
       cache: "no-cache",
     });
