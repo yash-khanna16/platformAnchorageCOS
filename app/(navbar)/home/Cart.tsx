@@ -82,14 +82,19 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const router = useRouter();
 
   useEffect(() => {
-    fetchAllCoupons()
-      .then((res) => {
-        console.log("res: ", res);
-        setCoupons(res);
-      })
-      .catch((error) => {
-        console.log("Error fetching coupons");
-      });
+    const fetchCoupons = async () => {
+      const auth = await getAuthCustomer();
+      const email = (auth?.guest_email as string) || "";
+      fetchAllCoupons(email)
+        .then((res) => {
+          console.log("res: ", res);
+          setCoupons(res);
+        })
+        .catch((error) => {
+          console.log("Error fetching coupons");
+        });
+    };
+    fetchCoupons();
   }, []);
 
   const validateCouponCode = async () => {

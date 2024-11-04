@@ -457,7 +457,10 @@ function Home() {
         <div className="p-4">
           <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse rounded-2xl"></div>
           {[1, 2, 3, 4, 5, 6, 7].map((element: number) => (
-            <div key={element} className="flex rounded-2xl justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse">
+            <div
+              key={element}
+              className="flex rounded-2xl justify-between items-center pb-3 pt-1 border-b border-dotted animate-pulse"
+            >
               <div>
                 <div className="mt-2 rounded-2xl bg-gray-200 w-44 h-6"></div>
                 <div className="w-10 rounded-2xl h-5 bg-gray-200 my-3 "></div>
@@ -484,7 +487,7 @@ function Home() {
                   <div className="flex justify-between items-center">
                     <div className="my-2">
                       {item.bestSeller && (
-                        <span className=" border-red-500 p-1 px-2 border bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
+                        <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
                           <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
                           <span className="ml-1">Bestseller</span>
                         </span>
@@ -567,9 +570,9 @@ function Home() {
                       <div className="flex justify-between items-center">
                         <div className="my-2">
                           {item.bestSeller && (
-                            <span className=" border-red-500 p-0.5 border bg-yellow-50 text-sm font-medium rounded-md text-red-600">
+                            <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
                               <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
-                              Bestseller
+                              <span className="ml-1">Bestseller</span>
                             </span>
                           )}
                           <div className="flex items-center mt-1">
