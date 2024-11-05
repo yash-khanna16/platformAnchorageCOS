@@ -1,4 +1,5 @@
 "use server";
+import uploadFile from "react-s3";
 
 export async function fetchBookingByRoom(room: string) {
   try {
@@ -102,7 +103,7 @@ export async function placeOrder(dataSend: {
   status: string;
   email: string;
   items: { item_id: string; qty: number }[];
-  coupon_id: string|null;
+  coupon_id: string | null;
 }) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
@@ -280,7 +281,7 @@ export async function fetchAllCoupons(email: string) {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        email: email
+        email: email,
       },
       cache: "no-cache",
     });
@@ -359,3 +360,4 @@ export async function validateCoupon(
     };
   }
 }
+
