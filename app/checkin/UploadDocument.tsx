@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowBack, Close, CloudUpload, Lock, Shield } from "@mui/icons-material";
 import { Option, Select } from "@mui/joy";
 import { secureIcon } from "@/app/assets/icons";
+import { uploadDocument } from "../actions/uploadDocument";
 
 interface UploadDocumentProps {
   step: number;
@@ -9,7 +10,7 @@ interface UploadDocumentProps {
   room: string;
 }
 
-export default function UploadDocument({ step, setStep,room}: UploadDocumentProps) {
+export default function UploadDocument({ step, setStep, room }: UploadDocumentProps) {
   const [documentType, setDocumentType] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -35,7 +36,10 @@ export default function UploadDocument({ step, setStep,room}: UploadDocumentProp
   return (
     <div className="m-4">
       <div className="">
-        <div className="my-6 mb-4 font-semibold text-lg text-slate-700">You{"'"}re just one step away from a free gift! <span className="text-red-600 font-bold">Upload your document</span> to complete check-in.</div>
+        <div className="my-6 mb-4 font-semibold text-lg text-slate-700">
+          You{"'"}re just one step away from a free gift! <span className="text-red-600 font-bold">Upload your document</span> to
+          complete check-in.
+        </div>
         <Select
           size="lg"
           placeholder="Choose Document Type"
@@ -101,7 +105,16 @@ export default function UploadDocument({ step, setStep,room}: UploadDocumentProp
             <div>Back</div>
           </button>
           <button
-            onClick={() => setStep(step + 1)}
+            onClick={async() => {
+              if (uploadedFile) {
+                try {
+                  const res = await uploadDocument(uploadedFile, "hello");
+                  console.log("res: ", res)
+                } catch(error) {
+                  console.log("error: ", error)
+                }
+              }
+            }}
             disabled={!isFormComplete}
             className="my-6 w-full disabled:bg-gray-300 disabled:text-gray-400 text-white rounded-2xl font-semibold p-4 text-center bg-red-500"
           >
