@@ -359,3 +359,26 @@ export async function validateCoupon(
     };
   }
 }
+export async function allBookingData(room: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchCheckInByBoom`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        room: room
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
