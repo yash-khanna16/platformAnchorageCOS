@@ -17,7 +17,6 @@ export default function EnterRoomNo({
         <div className="text-red-600 font-semibold">Enter your Room Number</div>
         <form
           onSubmit={() => {
-            
             setStep(step + 1);
           }}
         >

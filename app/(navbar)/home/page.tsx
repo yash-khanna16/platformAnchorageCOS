@@ -20,8 +20,6 @@ import { Switch } from "@mui/material";
 import { sendGAEvent } from "@next/third-parties/google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Filter from "@/app/assets/filter.png";
-import Down from "@/app/assets/downwardChart.png";
-import Up from "@/app/assets/upwardChart.png";
 
 type MenuItem = {
   available: boolean;
@@ -307,7 +305,7 @@ function Home() {
                     <span className="text-sm ml-1 font-medium">Bestseller</span>
                   </div>
                   <div
-                    className="flex my-2 flex items-center p-1 gap-1"
+                    className="flex my-2  items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Up");
                     }}
@@ -316,7 +314,7 @@ function Home() {
                     <span className="text-sm ml-1 font-medium">Price Low to High</span>
                   </div>
                   <div
-                    className="flex mb-1 flex items-center p-1 gap-1"
+                    className="flex mb-1 items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Down");
                     }}
@@ -388,7 +386,7 @@ function Home() {
                     <span className="text-sm ml-1 font-medium">Bestseller</span>
                   </div>
                   <div
-                    className="flex my-2 flex items-center p-1 gap-1"
+                    className="flex my-2 items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Up");
                     }}
@@ -397,7 +395,7 @@ function Home() {
                     <span className="text-sm ml-1 font-medium">Price Low to High</span>
                   </div>
                   <div
-                    className="flex mb-1 flex items-center p-1 gap-1"
+                    className="flex mb-1  items-center p-1 gap-1"
                     onClick={() => {
                       handleFilter("Down");
                     }}
