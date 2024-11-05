@@ -2,15 +2,43 @@ import { useState } from "react";
 import { ArrowBack, Close, CloudUpload, Lock, Shield } from "@mui/icons-material";
 import { Option, Select } from "@mui/joy";
 import { secureIcon } from "@/app/assets/icons";
+
+type BookingDataType = {
+  booking_id: string;
+  checkin: string;
+  checkout: string;
+  guest_email: string;
+  meal_veg: number;
+  meal_non_veg: number;
+  remarks: string;
+  additional_info: string;
+  room: string;
+  breakfast: number;
+  document_url: string;
+  name: string;
+  phone: string;
+  company: string;
+  vessel: string;
+  rank: string;
+  id: string;
+};
 import { uploadDocument } from "../actions/uploadDocument";
 
 interface UploadDocumentProps {
   step: number;
   setStep: React.Dispatch<React.SetStateAction<number>>;
   room: string;
+  setSelectedBooking: React.Dispatch<React.SetStateAction<BookingDataType>>;
+  selectedBooking: BookingDataType;
 }
 
-export default function UploadDocument({ step, setStep, room }: UploadDocumentProps) {
+export default function UploadDocument({
+  step,
+  setStep,
+  room,
+  setSelectedBooking,
+  selectedBooking,
+}: UploadDocumentProps) {
   const [documentType, setDocumentType] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -72,14 +100,20 @@ export default function UploadDocument({ step, setStep, room }: UploadDocumentPr
               <div className="flex justify-between my-5 items-center">
                 <div className="flex gap-x-4 items-center">
                   {filePreview ? (
-                    <img src={filePreview} alt={documentType} className="rounded-xl h-14 w-14 object-cover" />
+                    <img
+                      src={filePreview}
+                      alt={documentType}
+                      className="rounded-xl h-14 w-14 object-cover"
+                    />
                   ) : (
                     <div className="h-14 w-14 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
                       No Preview
                     </div>
                   )}
                   <div className="">
-                    <div className="font-semibold text-slate-800">{documentType || "Document Type"}</div>
+                    <div className="font-semibold text-slate-800">
+                      {documentType || "Document Type"}
+                    </div>
                     <div className="text-sm text-slate-600">{uploadedFile.name}</div>
                   </div>
                 </div>
@@ -90,7 +124,8 @@ export default function UploadDocument({ step, setStep, room }: UploadDocumentPr
             )}
             <div className=" my-2 text-slate-500 text-xs inline-flex items-center gap-x-1 font-medium">
               {" "}
-              {secureIcon} Your documents are encrypted and securely stored, accessed only by authorized personnel.
+              {secureIcon} Your documents are encrypted and securely stored, accessed only by
+              authorized personnel.
             </div>
           </>
         )}
