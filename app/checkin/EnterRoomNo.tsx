@@ -1,3 +1,7 @@
+import { Close, Info } from "@mui/icons-material";
+import { Snackbar } from "@mui/joy";
+import { useState } from "react";
+
 export default function EnterRoomNo({
   step,
   setStep,
@@ -9,7 +13,10 @@ export default function EnterRoomNo({
   room: string;
   setRoom: React.Dispatch<React.SetStateAction<string>>;
 }) {
+  const [alert, setAlert] = useState(false);
+  const [message, setMessage] = useState("");
   return (
+    <>
     <div>
       <div className="mt-4 px-4">
         <div className="font-semibold text-2xl text-r">Welcome to Anchorage!</div>
@@ -17,7 +24,13 @@ export default function EnterRoomNo({
         <div className="text-red-600 font-semibold">Enter your Room Number</div>
         <form
           onSubmit={() => {
-            setStep(step + 1);
+            if(room.trim() ===""){
+              setMessage("Enter Room Number to proceed")
+              setAlert(true);
+            }
+            else{
+              setStep(step + 1);
+            }
           }}
         >
           <input
@@ -37,5 +50,24 @@ export default function EnterRoomNo({
         </form>
       </div>
     </div>
+    <Snackbar
+    open={alert}
+    autoHideDuration={5000}
+    // color="danger"
+    onClose={() => {
+      setAlert(false);
+    }}
+  >
+    <div className="flex justify-between w-full">
+      <div>
+        <Info />
+        {message}
+      </div>
+      <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
+        <Close />
+      </div>
+    </div>
+  </Snackbar>
+    </>
   );
 }
