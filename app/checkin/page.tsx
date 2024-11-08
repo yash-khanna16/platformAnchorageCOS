@@ -10,7 +10,7 @@ import UploadDocument from "./UploadDocument";
 import Confirmation from "./Confirmation";
 import { allBookingData } from "@/app/actions/api";
 
-type BookingDataType = {
+export type BookingDataType = {
   booking_id: string;
   checkin: string;
   checkout: string;
@@ -104,7 +104,7 @@ export default function Page() {
               >
                 <ArrowBack className="mr-4" />
               </span>
-            )}{" "}
+            )}
             {stepNames[step - 1]}
           </div>
         </div>
@@ -132,6 +132,6 @@ export default function Page() {
       </div>
     </>
   ) : (
-    <Confirmation />
+    <Confirmation selectedBooking={selectedBooking} />
   );
 }

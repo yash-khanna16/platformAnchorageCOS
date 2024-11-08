@@ -4,9 +4,10 @@ import Lottie from "lottie-react";
 import { ArrowForward, Lock } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { secureIcon } from "@/app/assets/icons";
+import { BookingDataType } from "./page";
 
 
-export default function Confirmation() {
+export default function Confirmation({selectedBooking}:{selectedBooking: BookingDataType}) {
   const router = useRouter();
   return (
     <div className=" font-montserrat w-screen h-screen bg-white rounded-2xl mx-auto px-8  space-y-8">
@@ -21,7 +22,7 @@ export default function Confirmation() {
       {/* Welcome Message */}
       <div className="text-center space-y-2">
         <p className="text-gray-600">Thank you,</p>
-        <p className="text-2xl font-semibold text-red-600">Sarah Johnson!</p>
+        <p className="text-2xl font-semibold text-red-600 uppercase">{selectedBooking.name.trim()}!</p>
         <p className="text-gray-600">Your check-in is complete</p>
       </div>
 
