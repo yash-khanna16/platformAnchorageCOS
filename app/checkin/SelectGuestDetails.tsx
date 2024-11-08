@@ -153,18 +153,17 @@ export default function SelectGuestDetails({
     <Snackbar
     open={alert}
     autoHideDuration={5000}
-    // color="danger"
     onClose={() => {
       setAlert(false);
     }}
   >
-    <div className="flex justify-between w-full">
+    <div className="flex justify-between w-full ">
       <div>
-        <Info />
+        <Info className="mr-3" />
         {message}
       </div>
       <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
-        <Close />
+        <Close  className="ml-1" />
       </div>
     </div>
   </Snackbar>

@@ -21,15 +21,16 @@ export default function EnterRoomNo({
       <div className="mt-4 px-4">
         <div className="font-semibold text-2xl text-r">Welcome to Anchorage!</div>
         <div className="my-4 text-slate-600 font-semibold ">Complete your check-in to receive a special gift on us!</div>
-        <div className="text-red-600 font-semibold">Enter your Room Number</div>
+        <div className="text-red-600 font-semibold">Please ask the admin for your Room Number</div>
         <form
-          onSubmit={() => {
+          onSubmit={(e) => {
+            e.preventDefault();
             if(room.trim() ===""){
               setMessage("Enter Room Number to proceed")
               setAlert(true);
             }
             else{
-              setStep(step + 1);
+            setStep(step + 1);
             }
           }}
         >

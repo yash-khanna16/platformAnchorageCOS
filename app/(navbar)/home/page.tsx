@@ -456,6 +456,7 @@ function Home() {
       {loading ? (
         <div className="p-4">
           <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse rounded-2xl"></div>
+          <div className="h-7 mb-3 w-24 bg-gray-200 animate-pulse rounded-2xl"></div>
           {[1, 2, 3, 4, 5, 6, 7].map((element: number) => (
             <div
               key={element}
@@ -465,7 +466,11 @@ function Home() {
                 <div className="mt-2 rounded-2xl bg-gray-200 w-44 h-6"></div>
                 <div className="w-10 rounded-2xl h-5 bg-gray-200 my-3 "></div>
                 <div className="w-20 rounded-2xl h-5 bg-gray-200 mt-3 "></div>
+                <div className="mt-2 rounded-2xl bg-gray-200 w-44 h-6"></div>
+                <div className="w-10 rounded-2xl h-5 bg-gray-200 my-3 "></div>
+                <div className="w-20 rounded-2xl h-5 bg-gray-200 mt-3 "></div>
               </div>
+              <div className="w-24 rounded-2xl h-10 bg-gray-200 mt-3 "></div>
               <div className="w-24 rounded-2xl h-10 bg-gray-200 mt-3 "></div>
             </div>
           ))}
