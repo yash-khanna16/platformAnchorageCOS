@@ -26,7 +26,6 @@ type BookingDataType = {
   rank: string;
   id: string;
 };
-import { uploadDocument } from "../actions/uploadDocument";
 
 interface UploadDocumentProps {
   step: number;
