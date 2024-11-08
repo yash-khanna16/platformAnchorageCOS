@@ -1,4 +1,5 @@
 "use server";
+import uploadFile from "react-s3";
 
 export async function fetchBookingByRoom(room: string) {
   try {
@@ -102,7 +103,7 @@ export async function placeOrder(dataSend: {
   status: string;
   email: string;
   items: { item_id: string; qty: number }[];
-  coupon_id: string|null;
+  coupon_id: string | null;
 }) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
@@ -280,7 +281,7 @@ export async function fetchAllCoupons(email: string) {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        email: email
+        email: email,
       },
       cache: "no-cache",
     });
@@ -357,5 +358,52 @@ export async function validateCoupon(
       success: false,
       message: "A network error occurred. Please try again later.",
     };
+  }
+}
+export async function allBookingData(room: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchCheckInByBoom`, {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        room: room
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function checkinGuest(booking_id: string, documentURL: string, email: string, room: string, name: string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/checkinGuest`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({booking_id: booking_id, document_url: documentURL, email: email, room: room, name: name}),
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
 }
