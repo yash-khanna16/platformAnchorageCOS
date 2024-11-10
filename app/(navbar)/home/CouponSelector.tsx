@@ -121,6 +121,7 @@ function CouponSelector({
               <div
                 onClick={() => {
                   setCouponCode(coupon.code);
+                  validateCouponCode();
                 }}
                 className="text-sm  text-red-400 font-semibold my-4"
               >

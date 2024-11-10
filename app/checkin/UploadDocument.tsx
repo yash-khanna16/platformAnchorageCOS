@@ -74,14 +74,17 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
   };
 
   // Check if form is complete
-  const isFormComplete = documentType && uploadedFile && documentURL;
+  const isFormComplete = documentType && uploadedFile && documentURL && selectedBooking.guest_email.trim() !== "";
 
   return (
     <div className="m-4">
       <div className="">
         <div className="my-6 mb-4 font-semibold text-lg text-slate-700">
-          Almost there!
-          <span className="text-red-600 font-bold"> Enter your email and upload ID</span> to complete check-in for a reward!
+          <div className="">Hi, {selectedBooking.name}</div>
+          <div className=" mt-2">
+            <span className="text-red-600 font-bold"> Enter your email</span> and{" "}
+            <span className="text-red-600 font-bold">upload ID</span> to complete check-in for a reward!
+          </div>
         </div>
         <div className="text-red-600 font-semibold">Enter your Email</div>
         <input
@@ -170,7 +173,13 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
               if (uploadedFile && documentURL) {
                 try {
                   setLoading(true);
-                  const res = await checkinGuest(selectedBooking.booking_id, documentURL, selectedBooking.guest_email, room, selectedBooking.name);
+                  const res = await checkinGuest(
+                    selectedBooking.booking_id,
+                    documentURL,
+                    selectedBooking.guest_email,
+                    room,
+                    selectedBooking.name
+                  );
                   const token = await createToken(selectedBooking, "2h");
                   setAuthCustomer(token);
                   setLoading(false);
