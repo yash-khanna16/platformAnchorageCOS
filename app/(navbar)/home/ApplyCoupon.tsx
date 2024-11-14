@@ -7,6 +7,7 @@ import { fetchAllCoupons, validateCoupon } from "@/app/actions/api";
 import { useFreeItems } from "@/lib/FreeCartContext";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { useCart } from "@/lib/CartContext";
+import { sendGAEvent } from "@next/third-parties/google";
 
 export type Coupon = {
   coupon_id: string;
@@ -115,7 +116,7 @@ function ApplyCoupon({
                     <div className="">{coupons[0].code}</div>
                     <div className="text-xs font-normal text-slate-800">{coupons[0].description}</div>
                   </div>
-                  <button disabled={couponLoading} onClick={()=>{validateCouponCode(coupons[0].code)}} className="text-xs w-[40%] text-right text-red-600">
+                  <button disabled={couponLoading} onClick={()=>{sendGAEvent("event", "apply-coupon");validateCouponCode(coupons[0].code)}} className="text-xs w-[40%] text-right text-red-600">
                     {couponLoading ? <CircularProgress color="danger" size="md" /> :"APPLY"}
 
                   </button>
