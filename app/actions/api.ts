@@ -384,7 +384,7 @@ export async function allBookingData(room: string) {
   }
 }
 
-export async function checkinGuest(booking_id: string, documentURL: string, email: string, room: string, name: string) {
+export async function checkinGuest(booking_id: string, documentURL: string|null, email: string, room: string, name: string, documentURLBack: string|null) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/checkinGuest`, {
       method: "POST",
@@ -392,7 +392,7 @@ export async function checkinGuest(booking_id: string, documentURL: string, emai
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({booking_id: booking_id, document_url: documentURL, email: email, room: room, name: name}),
+      body: JSON.stringify({booking_id: booking_id, document_url: documentURL, email: email, room: room, name: name, document_url_back: documentURLBack}),
       cache: "no-cache",
     });
 
