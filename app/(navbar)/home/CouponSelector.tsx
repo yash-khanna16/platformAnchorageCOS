@@ -6,6 +6,7 @@ import { fetchAllCoupons, validateCoupon } from "@/app/actions/api";
 import { useCart } from "@/lib/CartContext";
 import { useFreeItems } from "@/lib/FreeCartContext";
 import { getAuthCustomer } from "@/app/actions/cookie";
+import { sendGAEvent } from "@next/third-parties/google";
 
 function CouponSelector({
   coupons,
@@ -124,6 +125,7 @@ function CouponSelector({
                 onClick={() => {
                   setCouponCode(coupon.code);
                   validateCouponCode(coupon.code);
+                  sendGAEvent("event", "apply-coupon");
                 }}
                 className="text-sm  text-red-400 font-semibold my-4"
               >
