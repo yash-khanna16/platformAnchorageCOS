@@ -5,9 +5,9 @@ import { ArrowForward, Lock } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { secureIcon } from "@/app/assets/icons";
 import { BookingDataType } from "./page";
+import { sendGAEvent } from "@next/third-parties/google";
 
-
-export default function Confirmation({selectedBooking}:{selectedBooking: BookingDataType}) {
+export default function Confirmation({ selectedBooking }: { selectedBooking: BookingDataType }) {
   const router = useRouter();
   return (
     <div className=" font-montserrat w-screen h-screen bg-white rounded-2xl mx-auto px-8  space-y-8">
@@ -32,9 +32,15 @@ export default function Confirmation({selectedBooking}:{selectedBooking: Booking
         <div className="bg-white rounded-lg p-3 text-center shadow-sm">
           <span className="text-2xl font-bold tracking-wider text-red-600">CHECKIN150</span>
         </div>
-        <button onClick={()=>{router.push(`/home?room=${selectedBooking.room}`)}} className="w-full bg-red-600 hover:bg-red-700 text-sm text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center">
+        <button
+          onClick={() => {
+            sendGAEvent("event", "claim-checkin-coupon");
+            router.push(`/home?room=${selectedBooking.room}`);
+          }}
+          className="w-full bg-red-600 hover:bg-red-700 text-sm text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center"
+        >
           Tap here to claim your coupon
-          <ArrowForward className="text-xl"  />
+          <ArrowForward className="text-xl" />
         </button>
       </div>
 
