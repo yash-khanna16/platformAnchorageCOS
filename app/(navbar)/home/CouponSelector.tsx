@@ -33,13 +33,13 @@ function CouponSelector({
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const validateCouponCode = async () => {
+  const validateCouponCode = async (code: string) => {
     try {
       setCouponLoading(true);
 
       // await sleep(1000);
 
-      const couponId = coupons.find((coupon) => coupon.code === couponCode)?.coupon_id;
+      const couponId = coupons.find((coupon) => coupon.code === code)?.coupon_id;
       console.log("coupons: ", coupons);
       console.log("coupon id, ", couponId);
       if (couponId) {
@@ -61,7 +61,7 @@ function CouponSelector({
           setDiscount(res.data.discount);
           setFreeItems(res.data.freeItems);
           setCouponDialog(false);
-          setValidatedCoupon(couponCode);
+          setValidatedCoupon(code);
         }
       } else {
         setOpen(true);
@@ -101,7 +101,9 @@ function CouponSelector({
             />
             <button
               disabled={couponCode === ""}
-              onClick={validateCouponCode}
+              onClick={()=>{
+                validateCouponCode(couponCode);
+              }}
               className={`text-sm ${
                 couponCode === "" ? "text-slate-400" : "text-red-400"
               }  h-8 flex items-center font-semibold outline-none rounded-lg px-2  p-2 `}
@@ -121,6 +123,7 @@ function CouponSelector({
               <div
                 onClick={() => {
                   setCouponCode(coupon.code);
+                  validateCouponCode(coupon.code);
                 }}
                 className="text-sm  text-red-400 font-semibold my-4"
               >

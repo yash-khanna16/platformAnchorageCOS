@@ -43,6 +43,7 @@ export default function EnterRoomNo({
             className="p-4 border w-full my-4 outline outline-slate-300 rounded-xl"
           />
           <button
+            disabled={room.trim() === ""}
             type="submit"
             className="my-6 w-full disabled:bg-gray-300 disabled:text-gray-400 text-white rounded-2xl font-semibold p-4 text-center bg-red-500"
           >

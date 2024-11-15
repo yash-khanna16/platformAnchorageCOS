@@ -37,29 +37,33 @@ interface UploadDocumentProps {
 
 export default function UploadDocument({ step, setStep, room, setSelectedBooking, selectedBooking }: UploadDocumentProps) {
   const [documentType, setDocumentType] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [documentURL, setDocumentURL] = useState<string | null>(null);
+  const [uploadedFileFront, setUploadedFileFront] = useState<File | null>(null);
+  const [uploadedFileBack, setUploadedFileBack] = useState<File | null>(null);
+  const [filePreviewFront, setFilePreviewFront] = useState<string | null>(null);
+  const [filePreviewBack, setFilePreviewBack] = useState<string | null>(null);
+  const [uploadLoadingFront, setUploadLoadingFront] = useState(false);
+  const [uploadLoadingBack, setUploadLoadingBack] = useState(false);
+  const [documentURLFront, setDocumentURLFront] = useState<string | null>(null);
+  const [documentURLBack, setDocumentURLBack] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Handle file selection
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChangeFront = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       try {
         const file = e.target.files[0];
-        setUploadLoading(true);
+        setUploadLoadingFront(true);
         const res = await uploadDocument(file, selectedBooking.booking_id + "_" + documentType);
-        setDocumentURL(res);
-        setUploadLoading(false);
+        setDocumentURLFront(res);
+        setUploadLoadingFront(false);
         setAlert(true);
         setMessage("Doucment Uploaded Successfully!");
-        setUploadedFile(file);
-        setFilePreview(URL.createObjectURL(file)); // Generate a preview URL
+        setUploadedFileFront(file);
+        setFilePreviewFront(URL.createObjectURL(file)); // Generate a preview URL
       } catch (error) {
-        setUploadLoading(false);
+        setUploadLoadingFront(false);
         setAlert(true);
         setMessage("Something went wrong! Please try again later.");
       }
@@ -67,21 +71,58 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
   };
 
   // Handle file removal
-  const handleFileRemove = () => {
-    setUploadedFile(null);
-    setFilePreview(null);
-    setDocumentURL(null);
+  const handleFileRemoveFront = () => {
+    setUploadedFileFront(null);
+    setFilePreviewFront(null);
+    setDocumentURLFront(null);
+  };
+  const handleFileChangeBack = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      try {
+        const file = e.target.files[0];
+        setUploadLoadingBack(true);
+        const res = await uploadDocument(file, selectedBooking.booking_id + "_" + documentType + "_back");
+        setDocumentURLBack(res);
+        setUploadLoadingBack(false);
+        setAlert(true);
+        setMessage("Doucment Uploaded Successfully!");
+        setUploadedFileBack(file);
+        setFilePreviewBack(URL.createObjectURL(file)); // Generate a preview URL
+      } catch (error) {
+        setUploadLoadingBack(false);
+        setAlert(true);
+        setMessage("Something went wrong! Please try again later.");
+      }
+    }
+  };
+
+  // Handle file removal
+  const handleFileRemoveBack = () => {
+    setUploadedFileBack(null);
+    setFilePreviewBack(null);
+    setDocumentURLBack(null);
   };
 
   // Check if form is complete
-  const isFormComplete = documentType && uploadedFile && documentURL;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isBothFrontAndBack = documentType === "aadhar" || documentType === "other";
+
+  const isFormComplete: boolean =
+    !!documentType &&
+    emailPattern.test(selectedBooking.guest_email) &&
+    (isBothFrontAndBack
+      ? !!(uploadedFileFront && documentURLFront && uploadedFileBack && documentURLBack)
+      : !!(uploadedFileFront && documentURLFront));
 
   return (
     <div className="m-4">
       <div className="">
         <div className="my-6 mb-4 font-semibold text-lg text-slate-700">
-          Almost there!
-          <span className="text-red-600 font-bold"> Enter your email and upload ID</span> to complete check-in for a reward!
+          <div className="">Hi, {selectedBooking.name}</div>
+          <div className=" mt-2">
+            <span className="text-red-600 font-bold"> Enter your email</span> and{" "}
+            <span className="text-red-600 font-bold">upload ID</span> to complete check-in for a reward!
+          </div>
         </div>
         <div className="text-red-600 font-semibold">Enter your Email</div>
         <input
@@ -101,7 +142,11 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
           size="lg"
           placeholder="Choose Document Type"
           value={documentType}
-          onChange={(e, newValue) => setDocumentType(newValue)}
+          onChange={(e, newValue) => {
+            setDocumentType(newValue);
+            handleFileRemoveBack();
+            handleFileRemoveFront();
+          }}
         >
           <Option value="aadhar">Aadhar Card</Option>
           <Option value="passport">Passport</Option>
@@ -109,50 +154,152 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
           <Option value="other">Other</Option>
         </Select>
 
-        {documentType && !uploadLoading && (
-          <>
-            <div className="my-4 font-semibold">Document</div>
-            {!uploadedFile && (
-              <div
-                onClick={() => {
-                  document.getElementById("fileInput")?.click();
-                }}
-                className="mb-4 text-slate-600 w-full border p-4 rounded-xl flex justify-between items-center"
-              >
-                <label className="cursor-pointer">Upload file or take a photo</label>
-                <CloudUpload className="text-slate-600" />
-              </div>
-            )}
-            <input type="file" id="fileInput" className="hidden" onChange={handleFileChange} />
-            {/* Display uploaded file preview if a file is uploaded */}
-            {uploadedFile && (
-              <div className="flex justify-between my-5 items-center">
-                <div className="flex gap-x-4 items-center">
-                  {filePreview ? (
-                    <img src={filePreview} alt={documentType} className="rounded-xl h-14 w-14 object-cover" />
-                  ) : (
-                    <div className="h-14 w-14 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
-                      No Preview
+        {documentType && (
+          <div className="mt-8">
+            {isBothFrontAndBack && (
+              <>
+                {!uploadedFileFront && (
+                  <>
+                    <div className="my-4 font-semibold mx-1">Front Side</div>
+                    {!uploadLoadingFront && (
+                      <>
+                        <div
+                          onClick={() => {
+                            document.getElementById("fileInputFront")?.click();
+                          }}
+                          className="mb-4 text-slate-600 w-full border p-4 rounded-xl flex justify-between items-center"
+                        >
+                          <label className="cursor-pointer">Upload file or take a photo</label>
+                          <CloudUpload className="text-slate-600" />
+                        </div>
+                      </>
+                    )}
+                    {uploadLoadingFront && (
+                      <div className="mt-6 flex justify-center space-x-3 items-center">
+                        <LinearProgress size="md" />
+                      </div>
+                    )}
+                  </>
+                )}
+                {uploadedFileFront && (
+                  <div className="flex justify-between my-5 items-center">
+                    <div className="flex gap-x-4 items-center">
+                      {filePreviewFront ? (
+                        <img src={filePreviewFront} alt={documentType} className="rounded-xl h-14 w-14 object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+                          No Preview
+                        </div>
+                      )}
+                      <div className="">
+                        <div className="font-semibold text-slate-800 capitalize">{documentType + " Front" || "Document Type"}</div>
+                        <div className="text-sm text-slate-600">{uploadedFileFront.name}</div>
+                      </div>
                     </div>
-                  )}
-                  <div className="">
-                    <div className="font-semibold text-slate-800">{documentType || "Document Type"}</div>
-                    <div className="text-sm text-slate-600">{uploadedFile.name}</div>
+                    <div onClick={handleFileRemoveFront} className="cursor-pointer">
+                      <Close className="text-slate-600" />
+                    </div>
                   </div>
-                </div>
-                <div onClick={handleFileRemove} className="cursor-pointer">
-                  <Close className="text-slate-600" />
-                </div>
-              </div>
+                )}
+                {!uploadedFileBack && (
+                  <>
+                    <div className="my-4 font-semibold mx-1">Back Side</div>
+                    {!uploadedFileBack && !uploadLoadingBack && (
+                      <>
+                        <div
+                          onClick={() => {
+                            document.getElementById("fileInputBack")?.click();
+                          }}
+                          className="mb-4 text-slate-600 w-full border p-4 rounded-xl flex justify-between items-center"
+                        >
+                          <label className="cursor-pointer">Upload file or take a photo</label>
+                          <CloudUpload className="text-slate-600" />
+                        </div>
+                      </>
+                    )}
+                    {uploadLoadingBack && (
+                      <div className="mt-6 flex justify-center space-x-3 items-center">
+                        <LinearProgress size="md" />
+                      </div>
+                    )}
+                  </>
+                )}
+                {uploadedFileBack && (
+                  <div className="flex justify-between my-5 items-center">
+                    <div className="flex gap-x-4 items-center">
+                      {filePreviewBack ? (
+                        <img src={filePreviewBack} alt={documentType} className="rounded-xl h-14 w-14 object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+                          No Preview
+                        </div>
+                      )}
+                      <div className="">
+                        <div className="font-semibold text-slate-800 capitalize">{documentType + " Back" || "Document Type"}</div>
+                        <div className="text-sm text-slate-600">{uploadedFileBack.name}</div>
+                      </div>
+                    </div>
+                    <div onClick={handleFileRemoveBack} className="cursor-pointer">
+                      <Close className="text-slate-600" />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
+            {!isBothFrontAndBack && (
+              <>
+                {!uploadedFileFront && (
+                  <>
+                    <div className="my-4 font-semibold">Document</div>
+                    {!uploadLoadingFront && (
+                      <>
+                        <div
+                          onClick={() => {
+                            document.getElementById("fileInputFront")?.click();
+                          }}
+                          className="mb-4 text-slate-600 w-full border p-4 rounded-xl flex justify-between items-center"
+                        >
+                          <label className="cursor-pointer">Upload file or take a photo</label>
+                          <CloudUpload className="text-slate-600" />
+                        </div>
+                      </>
+                    )}
+                    {uploadLoadingFront && (
+                      <div className="mt-6 flex justify-center space-x-3 items-center">
+                        <LinearProgress size="md" />
+                      </div>
+                    )}
+                  </>
+                )}
+                {uploadedFileFront && (
+                  <div className="flex justify-between my-5 items-center">
+                    <div className="flex gap-x-4 items-center">
+                      {filePreviewFront ? (
+                        <img src={filePreviewFront} alt={documentType} className="rounded-xl h-14 w-14 object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+                          No Preview
+                        </div>
+                      )}
+                      <div className="">
+                        <div className="font-semibold text-slate-800 capitalize">{documentType || "Document Type"}</div>
+                        <div className="text-sm text-slate-600">{uploadedFileFront.name}</div>
+                      </div>
+                    </div>
+                    <div onClick={handleFileRemoveFront} className="cursor-pointer">
+                      <Close className="text-slate-600" />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            <input type="file" id="fileInputFront" className="hidden" onChange={handleFileChangeFront} />
+            <input type="file" id="fileInputBack" className="hidden" onChange={handleFileChangeBack} />
+            {/* Display uploaded file preview if a file is uploaded */}
+
             <div className=" my-2 text-slate-500 text-xs inline-flex items-center gap-x-1 font-medium">
               {secureIcon} Your documents are encrypted and securely stored, accessed only by authorized personnel.
             </div>
-          </>
-        )}
-        {uploadLoading && (
-          <div className="mt-6 flex justify-center space-x-3 items-center">
-            <LinearProgress size="md" />
           </div>
         )}
         <div className="flex gap-x-2">
@@ -167,10 +314,17 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
           </button>
           <button
             onClick={async () => {
-              if (uploadedFile && documentURL) {
+              if (isFormComplete) {
                 try {
                   setLoading(true);
-                  const res = await checkinGuest(selectedBooking.booking_id, documentURL, selectedBooking.guest_email, room, selectedBooking.name);
+                  const res = await checkinGuest(
+                    selectedBooking.booking_id,
+                    documentURLFront,
+                    selectedBooking.guest_email,
+                    room,
+                    selectedBooking.name,
+                    documentURLBack
+                  );
                   const token = await createToken(selectedBooking, "2h");
                   setAuthCustomer(token);
                   setLoading(false);
