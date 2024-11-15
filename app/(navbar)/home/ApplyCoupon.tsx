@@ -128,6 +128,7 @@ function ApplyCoupon({
                 <div
                   onClick={() => {
                     setCouponDialog(true);
+                    sendGAEvent("event", "view-all-coupons");
                   }}
                   className="text-sm w-full text-slate-600 border-t-2 border-dashed p-3   my-4 text-center"
                 >
@@ -164,6 +165,7 @@ function ApplyCoupon({
                   setCouponCode("");
                   setDiscount(0);
                   setFreeItems([]);
+                  sendGAEvent("event", "remove-applied-coupon");
                 }}
                 className="text-red-400 text-xs font-bold"
               >
