@@ -427,7 +427,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-xs">₹ {item.price}</div>
                     <button
-                      onClick={() => handleAddItem(item)}
+                      onClick={() =>{sendGAEvent("event", "add-bestseller-cart");handleAddItem(item)}}
                       className="relative border-red-500 border w-fit py-1 px-2 text-red-500 rounded-lg bg-red-50"
                     >
                       ADD
