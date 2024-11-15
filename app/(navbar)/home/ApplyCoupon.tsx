@@ -40,11 +40,11 @@ function ApplyCoupon({
   const [couponDialog, setCouponDialog] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const { freeItems, setFreeItems } = useFreeItems();
-  const [successModal, setSuccessModal] = useState(false)
+  const [successModal, setSuccessModal] = useState(false);
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
 
-  const {cart, setCart} = useCart();
+  const { cart, setCart } = useCart();
 
   // Example array of Coupon objects with coupon_type_description
 
@@ -60,7 +60,6 @@ function ApplyCoupon({
     setCouponDialog(open);
   };
 
-  
   const validateCouponCode = async (code: string) => {
     try {
       setCouponLoading(true);
@@ -103,7 +102,6 @@ function ApplyCoupon({
     }
   };
 
-
   return (
     <>
       <div className="m-2 font-montserrat shadow-md border bg-white rounded-2xl  font-semibold">
@@ -116,9 +114,15 @@ function ApplyCoupon({
                     <div className="">{coupons[0].code}</div>
                     <div className="text-xs font-normal text-slate-800">{coupons[0].description}</div>
                   </div>
-                  <button disabled={couponLoading} onClick={()=>{sendGAEvent("event", "apply-coupon");validateCouponCode(coupons[0].code)}} className="text-xs w-[40%] text-right text-red-600">
-                    {couponLoading ? <CircularProgress color="danger" size="md" /> :"APPLY"}
-
+                  <button
+                    disabled={couponLoading}
+                    onClick={() => {
+                      sendGAEvent("event", "apply-coupon");
+                      validateCouponCode(coupons[0].code);
+                    }}
+                    className="text-xs w-[40%] text-right text-red-600"
+                  >
+                    {couponLoading ? <CircularProgress color="danger" size="md" /> : "APPLY"}
                   </button>
                 </div>
                 <div
@@ -127,7 +131,7 @@ function ApplyCoupon({
                   }}
                   className="text-sm w-full text-slate-600 border-t-2 border-dashed p-3   my-4 text-center"
                 >
-                  TAP HERE TO VIEW MORE COUPONS
+                  VIEW MORE COUPONS
                 </div>
               </div>
             )}
@@ -172,40 +176,58 @@ function ApplyCoupon({
           </div>
         )}
 
-<Modal
-        aria-labelledby="modal-title"
-        aria-describedby="modal-desc"
-        open={successModal}
-        onClose={() => setSuccessModal(false)}
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
-          <div className="font-medium text-sm text-center text-slate-600 ">
-
-            <div className=""> {"'"}{validatedCoupon}{"'"} applied </div>
-          </div>
-          
-            <div className="font-semibold text-slate-900 text-xl text-center">₹{discount} saved with this coupon</div>
-          <button onClick={()=>{setSuccessModal(false)}} className="w-full hover:bg-red-600 bg-red-500 rounded-2xl text-white p-3 font-semibold">LESS GOOO!!!</button>
-        </ModalDialog>
-      </Modal>
-      <Modal
-        aria-labelledby="modal-title"
-        aria-describedby="modal-desc"
-        open={open}
-        onClose={() => setOpen(false)}
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
-          <div className="font-semibold text- text-slate-600 flex gap-x-3 items-center">
-            <div>
-              <Error className="text-red-600" fontSize="large" />
+        <Modal
+          aria-labelledby="modal-title"
+          aria-describedby="modal-desc"
+          open={successModal}
+          onClose={() => setSuccessModal(false)}
+          sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+        >
+          <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
+            <div className="font-medium text-sm text-center text-slate-600 ">
+              <div className="">
+                {" "}
+                {"'"}
+                {validatedCoupon}
+                {"'"} applied{" "}
+              </div>
             </div>
-            <div className="">{message}</div>
-          </div>
-          <button onClick={()=>{setOpen(false)}} className="w-full hover:bg-red-600 mt-2 bg-red-500 rounded-2xl text-white p-3 font-semibold">OKAY</button>
-        </ModalDialog>
-      </Modal>
+
+            <div className="font-semibold text-slate-900 text-xl text-center">₹{discount} saved with this coupon</div>
+            <button
+              onClick={() => {
+                setSuccessModal(false);
+              }}
+              className="w-full hover:bg-red-600 bg-red-500 rounded-2xl text-white p-3 font-semibold"
+            >
+              LESS GOOO!!!
+            </button>
+          </ModalDialog>
+        </Modal>
+        <Modal
+          aria-labelledby="modal-title"
+          aria-describedby="modal-desc"
+          open={open}
+          onClose={() => setOpen(false)}
+          sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+        >
+          <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
+            <div className="font-semibold text- text-slate-600 flex gap-x-3 items-center">
+              <div>
+                <Error className="text-red-600" fontSize="large" />
+              </div>
+              <div className="">{message}</div>
+            </div>
+            <button
+              onClick={() => {
+                setOpen(false);
+              }}
+              className="w-full hover:bg-red-600 mt-2 bg-red-500 rounded-2xl text-white p-3 font-semibold"
+            >
+              OKAY
+            </button>
+          </ModalDialog>
+        </Modal>
 
         <SwipeableDrawer anchor={"bottom"} open={couponDialog} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
           <CouponSelector
