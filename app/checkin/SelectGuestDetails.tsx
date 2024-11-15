@@ -50,6 +50,7 @@ export default function SelectGuestDetails({
   loading,
   setSelectedBooking,
   selectedBooking,
+  room
 }: {
   step: number;
   setStep: React.Dispatch<React.SetStateAction<number>>;
@@ -57,6 +58,7 @@ export default function SelectGuestDetails({
   loading: boolean;
   setSelectedBooking: React.Dispatch<React.SetStateAction<BookingDataType>>;
   selectedBooking: BookingDataType;
+  room: string
 }) {
   const handleCheckboxChange = (data: BookingDataType) => {
     setSelectedBooking(data.booking_id === selectedBooking.booking_id ? emptyBooking : data);
@@ -67,8 +69,8 @@ export default function SelectGuestDetails({
   return (
     <>
     <div className="m-4">
-      <div className="font-semibold text-lg text-slate-700">
-        Only two steps left! <span className="text-red-600 font-bold">Select your details</span> to unlock a surprise offer!
+    <div className="font-semibold text-lg text-slate-700">
+        Only two steps left! <span className="text-red-600 font-bold">Select your details for ROOM {room}</span> to unlock a surprise offer!
       </div>
       
       <div className="my-2">

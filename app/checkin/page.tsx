@@ -121,6 +121,7 @@ export default function Page() {
           <SelectGuestDetails
             step={step}
             setStep={setStep}
+            room={room}
             bookingData={bookingData}
             loading={loading}
             setSelectedBooking={setSelectedBooking}
