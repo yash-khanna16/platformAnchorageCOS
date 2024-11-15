@@ -61,7 +61,7 @@ function CouponSelector({
           setDiscount(res.data.discount);
           setFreeItems(res.data.freeItems);
           setCouponDialog(false);
-          setValidatedCoupon(couponCode);
+          setValidatedCoupon(code);
         }
       } else {
         setOpen(true);
