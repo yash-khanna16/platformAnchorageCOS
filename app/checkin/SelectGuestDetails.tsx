@@ -155,7 +155,6 @@ export default function SelectGuestDetails({
     <Snackbar
     open={alert}
     autoHideDuration={5000}
-    // color="danger"
     onClose={() => {
       setAlert(false);
     }}
