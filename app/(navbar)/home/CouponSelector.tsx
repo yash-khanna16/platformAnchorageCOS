@@ -1,5 +1,13 @@
 import { ArrowBack, Error } from "@mui/icons-material";
-import { CircularProgress, Modal, ModalClose, ModalDialog, Sheet, Snackbar, Typography } from "@mui/joy";
+import {
+  CircularProgress,
+  Modal,
+  ModalClose,
+  ModalDialog,
+  Sheet,
+  Snackbar,
+  Typography,
+} from "@mui/joy";
 import React, { useEffect, useState } from "react";
 import { Coupon } from "./ApplyCoupon";
 import { fetchAllCoupons, validateCoupon } from "@/app/actions/api";
@@ -102,7 +110,7 @@ function CouponSelector({
             />
             <button
               disabled={couponCode === ""}
-              onClick={()=>{
+              onClick={() => {
                 validateCouponCode(couponCode);
               }}
               className={`text-sm ${
@@ -115,9 +123,14 @@ function CouponSelector({
         </div>
         <div className="space-y-3 overflow-auto hide-scrollbar h-[90vh] py-8 mt-[130px]">
           {coupons.map((coupon, index) => (
-            <div key={index} className="flex border font-montserrat justify-between shadow-md rounded-2xl p-4 ">
+            <div
+              key={index}
+              className="flex border font-montserrat justify-between shadow-md rounded-2xl p-4 "
+            >
               <div>
-                <div className="font-semibold text-green-700 my-3">{coupon.coupon_type_description}</div>
+                <div className="font-semibold text-green-700 my-3">
+                  {coupon.coupon_type_description}
+                </div>
                 <div className="mt-1 mb-3 font-bold">{coupon.code}</div>
                 <div className="text-sm text-slate-600">{coupon.description}</div>
               </div>
@@ -134,7 +147,9 @@ function CouponSelector({
             </div>
           ))}
           {coupons.length === 0 && (
-            <div className="font-montserrat font-semibold text-center text-gray-600">No Coupons Available</div>
+            <div className="font-montserrat font-semibold text-center text-gray-600">
+              No Coupons Available
+            </div>
           )}
         </div>
       </div>
@@ -147,12 +162,25 @@ function CouponSelector({
       >
         <ModalDialog sx={{ maxWidth: 800 }} className="p-5 font-montserrat rounded-2xl py-6">
           <div className="font-medium text-sm text-center text-slate-600 ">
-
-            <div className=""> {"'"}{couponCode}{"'"} applied </div>
+            <div className="">
+              {" "}
+              {"'"}
+              {couponCode}
+              {"'"} applied{" "}
+            </div>
           </div>
-          
-            <div className="font-semibold text-slate-900 text-xl text-center">₹{discount} saved with this coupon</div>
-          <button onClick={()=>{setSuccessModal(false)}} className="w-full hover:bg-red-600 bg-red-500 rounded-2xl text-white p-3 font-semibold">LESS GOOO!!!</button>
+
+          <div className="font-semibold text-slate-900 text-xl text-center">
+            ₹{discount} saved with this coupon
+          </div>
+          <button
+            onClick={() => {
+              setSuccessModal(false);
+            }}
+            className="w-full hover:bg-red-600 bg-red-500 rounded-2xl text-white p-3 font-semibold"
+          >
+            LESS GOOO!!!
+          </button>
         </ModalDialog>
       </Modal>
       <Modal
@@ -169,7 +197,14 @@ function CouponSelector({
             </div>
             <div className="">{message}</div>
           </div>
-          <button onClick={()=>{setOpen(false)}} className="w-full hover:bg-red-600 mt-2 bg-red-500 rounded-2xl text-white p-3 font-semibold">OKAY</button>
+          <button
+            onClick={() => {
+              setOpen(false);
+            }}
+            className="w-full hover:bg-red-600 mt-2 bg-red-500 rounded-2xl text-white p-3 font-semibold"
+          >
+            OKAY
+          </button>
         </ModalDialog>
       </Modal>
     </div>

@@ -104,8 +104,11 @@ export async function placeOrder(dataSend: {
   email: string;
   items: { item_id: string; qty: number }[];
   coupon_id: string | null;
-}) {
+  time_to_prepare:number;
+  delay:number;
+},) {
   try {
+    console.log(dataSend);
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
       method: "POST",
       mode: "cors",

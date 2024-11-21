@@ -1,12 +1,26 @@
 "use client";
-import { Add, ArrowForward, AutoAwesome, Close, Info, Remove, TrendingDown, TrendingUp } from "@mui/icons-material";
+import {
+  Add,
+  ArrowForward,
+  AutoAwesome,
+  Close,
+  Info,
+  Remove,
+  TrendingDown,
+  TrendingUp,
+} from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import Veg from "../../assets/veg.png";
 import Nonveg from "../../assets/nonveg.png";
 import React, { useEffect, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import { fetchAllItems, fetchFeedbackCOS, fetchOrdersByBookingId, insertFeedbackCOS } from "../../actions/api";
+import {
+  fetchAllItems,
+  fetchFeedbackCOS,
+  fetchOrdersByBookingId,
+  insertFeedbackCOS,
+} from "../../actions/api";
 import Cart from "./Cart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
@@ -16,7 +30,7 @@ import { getAuthCustomer } from "@/app/actions/cookie";
 import { BookingInfoType } from "../timeline/page";
 import Lottie from "lottie-react";
 import animationdata from "@/app/assets/happy.json";
-import { Switch } from "@mui/material";
+import { Button, Switch } from "@mui/material";
 import { sendGAEvent } from "@next/third-parties/google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Filter from "@/app/assets/filter.png";
@@ -57,8 +71,9 @@ function Home() {
   const [filterOn, setFilterOn] = useState(false);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [filterButtonOn, setFilterButtonOn] = useState(false);
+  const [openMealsModal, setOpenMealsModal] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
-
+  
   const params = useSearchParams();
   const room = params.get("room");
   const router = useRouter();
@@ -148,7 +163,8 @@ function Home() {
     if (
       event &&
       event.type === "keydown" &&
-      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
+      ((event as React.KeyboardEvent).key === "Tab" ||
+        (event as React.KeyboardEvent).key === "Shift")
     ) {
       return;
     }
@@ -175,6 +191,19 @@ function Home() {
         return [...prevSelected, { ...item, qty: 1 }];
       }
     });
+  };
+  const handleAddMeals = (item: MenuItem) => {
+    setCart((prevSelected) => {
+      const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
+      if (existingItem) {
+        return prevSelected.map((cartItem) =>
+          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
+        );
+      } else {
+        return [...prevSelected, { ...item, qty: 1 }];
+      }
+    });
+    setOpenMealsModal(true);
   };
 
   const handleRemoveItem = (item: MenuItem) => {
@@ -238,8 +267,18 @@ function Home() {
   return (
     <div className="font-montserrat">
       <div>
-        <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
-          <Cart cartOpen={cartOpen} setCartOpen={setCartOpen} expandedId={expandedId} toggleExpand={toggleExpand} />
+        <SwipeableDrawer
+          anchor={"bottom"}
+          open={cartOpen}
+          onClose={toggleDrawer(false)}
+          onOpen={toggleDrawer(true)}
+        >
+          <Cart
+            cartOpen={cartOpen}
+            setCartOpen={setCartOpen}
+            expandedId={expandedId}
+            toggleExpand={toggleExpand}
+          />
         </SwipeableDrawer>
       </div>
       <div className="sticky top-0 z-10 bg-white pb-4">
@@ -272,7 +311,10 @@ function Home() {
             </div>
           </div>
 
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
+            {" "}
+            Room: {room}{" "}
+          </div>
         </div>
 
         <div>
@@ -287,7 +329,13 @@ function Home() {
                 {filterButtonOn ? (
                   <Close style={{ height: "30" }} />
                 ) : (
-                  <Image alt="filter" className=" p-1" src={Filter} height={55} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                  <Image
+                    alt="filter"
+                    className=" p-1"
+                    src={Filter}
+                    height={55}
+                    style={{ maxHeight: "30px", maxWidth: "30px" }}
+                  />
                 )}
                 <div
                   id="filterDropDown"
@@ -493,7 +541,10 @@ function Home() {
                     <div className="my-2">
                       {item.bestSeller && (
                         <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
-                          <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
+                          <AutoAwesomeIcon
+                            className="inline relative -top-0.5"
+                            style={{ height: "15px", width: "15px" }}
+                          />
                           <span className="ml-1">Bestseller</span>
                         </span>
                       )}
@@ -513,7 +564,10 @@ function Home() {
                         {expandedId === item.item_id ? (
                           <div className="text-sm leading-5">
                             {item.description}{" "}
-                            <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                            <button
+                              className="font-medium text-red-500 text-xs"
+                              onClick={() => toggleExpand(item.item_id)}
+                            >
                               show less
                             </button>
                           </div>
@@ -522,7 +576,10 @@ function Home() {
                             {item.description.split(" ").slice(0, 15).join(" ")}
                             {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                             {item.description.split(" ").length > 10 && (
-                              <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                              <button
+                                className="font-medium text-red-500 text-xs"
+                                onClick={() => toggleExpand(item.item_id)}
+                              >
                                 read more
                               </button>
                             )}
@@ -533,17 +590,37 @@ function Home() {
                     <div className="font-medium ml-3 mt-1">
                       {selectedItem ? (
                         <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                          <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
+                          <button
+                            onClick={() => handleRemoveItem(item)}
+                            className="absolute top-2 left-1"
+                          >
                             <Remove fontSize="small" />
                           </button>
                           {selectedItem.qty}
-                          <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
+                          <button
+                            onClick={() => {
+                              console.log(item.category);
+                              if (item.category === "meals") {
+                                handleAddMeals(item);
+                              } else {
+                                handleAddItem(item);
+                              }
+                            }}
+                            className="absolute top-2 right-1"
+                          >
                             <Add fontSize="small" />
                           </button>
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleAddItem(item)}
+                          onClick={() => {
+                            console.log(item.category);
+                            if (item.category === "meals") {
+                              handleAddMeals(item);
+                            } else {
+                              handleAddItem(item);
+                            }
+                          }}
                           className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
                         >
                           ADD
@@ -576,7 +653,10 @@ function Home() {
                         <div className="my-2">
                           {item.bestSeller && (
                             <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
-                              <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
+                              <AutoAwesomeIcon
+                                className="inline relative -top-0.5"
+                                style={{ height: "15px", width: "15px" }}
+                              />
                               <span className="ml-1">Bestseller</span>
                             </span>
                           )}
@@ -596,7 +676,10 @@ function Home() {
                             {expandedId === item.item_id ? (
                               <div className="text-sm leading-5">
                                 {item.description}{" "}
-                                <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                                <button
+                                  className="font-medium text-red-500 text-xs"
+                                  onClick={() => toggleExpand(item.item_id)}
+                                >
                                   show less
                                 </button>
                               </div>
@@ -605,7 +688,10 @@ function Home() {
                                 {item.description.split(" ").slice(0, 15).join(" ")}
                                 {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                                 {item.description.split(" ").length > 10 && (
-                                  <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                                  <button
+                                    className="font-medium text-red-500 text-xs"
+                                    onClick={() => toggleExpand(item.item_id)}
+                                  >
                                     read more
                                   </button>
                                 )}
@@ -616,17 +702,35 @@ function Home() {
                         <div className="font-medium ml-3 mt-1">
                           {selectedItem ? (
                             <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                              <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
+                              <button
+                                onClick={() => handleRemoveItem(item)}
+                                className="absolute top-2 left-1"
+                              >
                                 <Remove fontSize="small" />
                               </button>
                               {selectedItem.qty}
-                              <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
+                              <button
+                                onClick={() => {
+                                  if (item.category === "meals") {
+                                    handleAddMeals(item);
+                                  } else {
+                                    handleAddItem(item);
+                                  }
+                                }}
+                                className="absolute top-2 right-1"
+                              >
                                 <Add fontSize="small" />
                               </button>
                             </div>
                           ) : (
                             <button
-                              onClick={() => handleAddItem(item)}
+                              onClick={() => {
+                                if (item.category === "meals") {
+                                  handleAddMeals(item);
+                                } else {
+                                  handleAddItem(item);
+                                }
+                              }}
                               className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
                             >
                               ADD
@@ -681,7 +785,10 @@ function Home() {
           <DialogContent className="h-fit">
             {!submitted && (
               <>
-                <div>Did everything go smoothly with your order? Please rate your experience or share a suggestion</div>
+                <div>
+                  Did everything go smoothly with your order? Please rate your experience or share a
+                  suggestion
+                </div>
                 <div className="my-4">
                   <div className="flex space-x-3 justify-center py-4 text-lg ">
                     {[1, 2, 3, 4, 5].map((value) => (
@@ -719,12 +826,17 @@ function Home() {
                         onChange={(e) => {
                           setComment(e.target.value);
                         }}
-                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
+                        className={
+                          "w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"
+                        }
                         placeholder="Leave a comment..."
                       />
                     )}
                     {rating > 0 && (
-                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
+                      <button
+                        className="p-3 bg-red-500 text-white rounded-2xl w-[100%]"
+                        type="submit"
+                      >
                         Submit
                       </button>
                     )}
@@ -756,6 +868,109 @@ function Home() {
           </DialogContent>
         </ModalDialog>
       </Modal>
+      <SwipeableDrawer
+        anchor={"bottom"}
+        open={openMealsModal}
+        onClose={() => {
+          setOpenMealsModal(false);
+        }}
+        onOpen={() => {
+          setOpenMealsModal(true);
+        }}
+      >
+        <div className=" font-montserrat p-3">
+          <div className="flex justify-between">
+            <div className="text-2xl">Add-On</div>
+            <button
+              onClick={() => {
+                setOpenMealsModal(false);
+              }}
+            >
+              <Close />
+            </button>
+          </div>
+          <DialogContent className="h-fit">
+            <div className="font-montserrat">Add Items with your meal</div>
+            <div className=" max-h-[60vh] overflow-scroll">
+              {Object.values(items)
+                .flat()
+                .filter((item: MenuItem) => item.bestSeller && item.category !== "meals")
+                .map((item: MenuItem) => {
+                  const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
+                  return (
+                    <div
+                      key={item.item_id}
+                      className="text-xs my-2  rounded-md border flex flex-col justify-between p-2"
+                    >
+                      <div>
+                        <div className="font-semibold text-base">
+                          <Image
+                            src={item.type === "veg" ? Veg : Nonveg}
+                            alt={item.type}
+                            className="inline relative mr-1 -top-0.5"
+                            height={15}
+                            width={15}
+                          />
+                          <span className="font-montserrat">{item.name}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between ">
+                        <div className="text-sm">₹ {item.price}</div>
+                        {selectedItem ? (
+                          <div className="relative border-red-500 border w-20 py-2 text-[17px] px-2 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                            <button
+                              onClick={() => handleRemoveItem(item)}
+                              className="absolute top-2 left-1"
+                            >
+                              <Remove fontSize="small" />
+                            </button>
+                            {selectedItem.qty}
+                            <button
+                              onClick={() => {
+                                if (item.category === "meals") {
+                                  handleAddMeals(item);
+                                } else {
+                                  handleAddItem(item);
+                                }
+                              }}
+                              className="absolute top-2 right-1"
+                            >
+                              <Add fontSize="small" />
+                            </button> 
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (item.category === "meals") {
+                                handleAddMeals(item);
+                              } else {
+                                handleAddItem(item);
+                              }
+                            }}
+                            className="relative border-red-500 border w-20  py-2 px-2 text-red-500 rounded-lg bg-red-50"
+                          >
+                            ADD
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <div>
+              <button
+                onClick={() => {
+                  setOpenMealsModal(false);
+                }}
+                className=" border font-montserrat text-white text-xl font-medium bg-red-500 rounded-md w-full p-2"
+              >
+                Confirm
+              </button>
+            </div>
+          </DialogContent>
+        </div>
+      </SwipeableDrawer>
+
       <Snackbar
         open={alert}
         autoHideDuration={5000}
