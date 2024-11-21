@@ -71,13 +71,14 @@ export async function verifyOTP(email: string, otp: string) {
     throw error;
   }
 }
-export async function fetchAllItems() {
+export async function fetchAllItems(bookingId: string) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchAllItems`, {
       method: "GET",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
+        bookingid: bookingId
       },
       cache: "no-cache",
     });

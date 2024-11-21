@@ -47,6 +47,7 @@ type MenuItem = {
   category_id: string;
   sequence: number;
   bestSeller: boolean;
+  isMealAvailable: boolean|undefined;
 };
 
 export type CartType = MenuItem & { quantity: number };
@@ -125,7 +126,8 @@ function Home() {
   useEffect(() => {
     const getItems = async () => {
       try {
-        const fetchedItems: MenuItem[] = await fetchAllItems();
+        const auth = (await getAuthCustomer()) as BookingInfoType;
+        const fetchedItems: MenuItem[] = await fetchAllItems(auth?.booking_id||"");
         console.log("items: ", fetchedItems);
         const availableItems = fetchedItems.filter((item) => item.available);
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
@@ -182,10 +184,59 @@ function Home() {
 
   const handleAddItem = (item: MenuItem) => {
     setCart((prevSelected) => {
+      const MEAL_IDS: Record<"BREAKFAST" | "LUNCH" | "DINNER", { veg: string; nonVeg: string }> = {
+        BREAKFAST: {
+          veg: process.env.NEXT_PUBLIC_BREAKFAST_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_BREAKFAST_NON_VEG_ID || "",
+        },
+        LUNCH: {
+          veg: process.env.NEXT_PUBLIC_LUNCH_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_LUNCH_NON_VEG_ID || "",
+        },
+        DINNER: {
+          veg: process.env.NEXT_PUBLIC_DINNER_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_DINNER_NON_VEG_ID || "",
+        },
+      };
+  
+      // Determine if the item belongs to a meal category
+      const mealCategory = Object.keys(MEAL_IDS).find((category) => {
+        const meal = MEAL_IDS[category as keyof typeof MEAL_IDS];
+        return meal.veg === item.item_id || meal.nonVeg === item.item_id;
+      }) as keyof typeof MEAL_IDS | undefined;
+  
+      if (mealCategory) {
+        const meal = MEAL_IDS[mealCategory];
+  
+        // Check if meal already exists in the cart with qty > 1
+        const existingMeal = prevSelected.find(
+          (cartItem) =>
+            (cartItem.item_id === meal.veg || cartItem.item_id === meal.nonVeg) && cartItem.qty > 0
+        );
+  
+        if (existingMeal) {
+          setAlert(true);
+          setMessage("You can only add one of this meal");
+        }
+  
+        // Replace the opposite type and ensure qty is 1
+        return [
+          ...prevSelected.filter(
+            (cartItem) =>
+              cartItem.item_id !== meal.veg && cartItem.item_id !== meal.nonVeg
+          ),
+          { ...item, qty: 1 }, // Add the new item with qty = 1
+        ];
+      }
+  
+      // For non-meal items or meal items that don't need replacement logic
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
+        // If the item already exists and is not a meal, increase the quantity
         return prevSelected.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
+          cartItem.item_id === item.item_id
+            ? { ...cartItem, qty: cartItem.qty + 1 }
+            : cartItem
         );
       } else {
         return [...prevSelected, { ...item, qty: 1 }];
@@ -648,7 +699,7 @@ function Home() {
                 .map((item) => {
                   const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
                   return (
-                    <div key={item.item_id} className="p-2 border-b border-gray-300 border-dashed">
+                    <div key={item.item_id} className={`p-2 border-b  border-gray-300 border-dashed`}>
                       <div className="flex justify-between items-center">
                         <div className="my-2">
                           {item.bestSeller && (
@@ -981,7 +1032,7 @@ function Home() {
       >
         <div className="flex justify-between w-full">
           <div>
-            <Info />
+            <Info className="mr-1" />
             {message}
           </div>
           <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
