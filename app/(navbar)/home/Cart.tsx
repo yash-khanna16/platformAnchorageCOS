@@ -105,8 +105,24 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const { freeItems, setFreeItems } = useFreeItems();
   const searchParams = useSearchParams();
   const [bestSeller, setBestseller] = useState<MenuItem[]>([]);
-  const platformFee = 2;
+  const [alert, setAlert] = useState(false);
+  const [message, setMessage] = useState("")
+  const [platformFee, setPlatformFee] = useState<number>(2);
   const router = useRouter();
+  const MEAL_IDS: Record<"BREAKFAST" | "LUNCH" | "DINNER", { veg: string; nonVeg: string }> = {
+    BREAKFAST: {
+      veg: process.env.NEXT_PUBLIC_BREAKFAST_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_BREAKFAST_NON_VEG_ID || "",
+    },
+    LUNCH: {
+      veg: process.env.NEXT_PUBLIC_LUNCH_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_LUNCH_NON_VEG_ID || "",
+    },
+    DINNER: {
+      veg: process.env.NEXT_PUBLIC_DINNER_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_DINNER_NON_VEG_ID || "",
+    },
+  };
 
   useEffect(() => {
     const fetchCoupons = async () => {
@@ -123,6 +139,20 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     };
     fetchCoupons();
   }, []);
+
+  useEffect(() => {
+
+    const hasMealItems = cart.some((item) => 
+      Object.values(MEAL_IDS).some(
+        (meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id
+    ));
+
+    console.log("use effect ran: ", hasMealItems)
+
+    if (hasMealItems) setPlatformFee(0);
+    else setPlatformFee(2);
+
+  },[cart])
 
   const validateCouponCode = async () => {
     try {
@@ -343,16 +373,39 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
 
   const handleAddItem = (item: DataType) => {
     setCart((prevCart) => {
+  
+      // Check if the item is from the meals category
+      const isMealCategory = Object.values(MEAL_IDS).some(
+        (meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id
+      );
+  
+      if (isMealCategory) {
+        // If the item already exists in the cart, do not allow more than 1 qty
+        const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
+        if (existingItem) {
+          setAlert(true);
+          setMessage("You can only add one of this meal");
+          return prevCart; // Return the cart as-is, no changes
+        }
+  
+        // Otherwise, add the item with qty = 1
+        return [...prevCart, { ...item, qty: 1 }];
+      }
+  
+      // For non-meal items, allow normal add-to-cart behavior
       const existingItem = prevCart.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         return prevCart.map((cartItem) =>
-          cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
+          cartItem.item_id === item.item_id
+            ? { ...cartItem, qty: cartItem.qty + 1 }
+            : cartItem
         );
       } else {
         return [...prevCart, { ...item, qty: 1 }];
       }
     });
   };
+  
 
   const handleRemoveItem = (item: DataType) => {
     setCart((prevCart) => {
@@ -390,10 +443,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
 
   useEffect(() => {
     const fetchBestSellers = async () => {
-      const fetchedItems: MenuItem[] = await fetchAllItems();
-      const availableItems = fetchedItems.filter(
-        (item) => item.available && item.bestSeller && item.category !== "essentials"
-      );
+      const auth = (await getAuthCustomer()) as BookingInfoType;
+      const fetchedItems: MenuItem[] = await fetchAllItems(auth?.booking_id||"");
+      const availableItems = fetchedItems.filter((item) => item.available && item.bestSeller && item.category !== "essentials");
       setBestseller(availableItems);
       setBestSellerLoading(false);
     };
@@ -941,6 +993,24 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           </DialogContent>
         </ModalDialog>
       </Modal>
+      <Snackbar
+        open={alert}
+        autoHideDuration={5000}
+        // color="danger"
+        onClose={() => {
+          setAlert(false);
+        }}
+      >
+        <div className="flex justify-between w-full">
+          <div>
+            <Info className="mr-1" />
+            {message}
+          </div>
+          <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
+            <Close />
+          </div>
+        </div>
+      </Snackbar>
       <Modal
         open={openScheduleModal}
         onClose={() => {
