@@ -53,16 +53,16 @@ function ScheduleTime({
             : dayjs(scheduleData.date).format("DD MMMM YYYY")}
         </span>
       </div>
-      <div className="flex text-2xl justify-center gap-1 mt-2">
+      <div className="flex text-2xl justify-center gap-1 mt-3">
         <div
-          className="bg-gray-300 p-1 px-4 flex items-center rounded-2xl cursor-pointer"
+          className="bg-gray-200  p-1 px-3 flex items-center rounded-2xl cursor-pointer"
           onClick={() => setFocusPart("hour")} // Set focus to hour
         >
           {scheduleData.time.split(":")[0]}
         </div>
         <div className="p-2 flex items-center">:</div>
         <div
-          className="bg-gray-300 px-4 p-1 flex items-center rounded-2xl cursor-pointer"
+          className="bg-gray-200  px-3 p-1 flex items-center rounded-2xl cursor-pointer"
           onClick={() => setFocusPart("minute")} // Set focus to minute
         >
           {scheduleData.time.split(":")[1]}
