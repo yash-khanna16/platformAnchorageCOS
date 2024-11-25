@@ -1,4 +1,14 @@
-import { Add, ArrowForward, AutoAwesome, Cancel, Close, Error, Info, KeyboardArrowDown, Remove } from "@mui/icons-material";
+import {
+  Add,
+  ArrowForward,
+  AutoAwesome,
+  Cancel,
+  Close,
+  Error,
+  Info,
+  KeyboardArrowDown,
+  Remove,
+} from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import React, { useEffect, useRef, useState } from "react";
@@ -7,7 +17,15 @@ import LoginPage from "../../components/Login";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { fetchAllCoupons, placeOrder, validateCoupon } from "@/app/actions/api";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Modal, ModalClose, ModalDialog, DialogContent, Input, DialogTitle, Snackbar } from "@mui/joy";
+import {
+  Modal,
+  ModalClose,
+  ModalDialog,
+  DialogContent,
+  Input,
+  DialogTitle,
+  Snackbar,
+} from "@mui/joy";
 import { useCart } from "@/lib/CartContext";
 import Lottie from "lottie-react";
 import animationData from "../../assets/tick.json";
@@ -77,7 +95,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [errorModal, setErrorModal] = useState(false);
   const [timeToPrepare, setTimeToPrepare] = useState(0);
   const [delay, setDelay] = useState(0);
-  const [notAvailable, setNotAvailable] = useState<{ item_id: string; name: string; available: boolean }[]>([]);
+  const [notAvailable, setNotAvailable] = useState<
+    { item_id: string; name: string; available: boolean }[]
+  >([]);
   const [bestSellerLoading, setBestSellerLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
@@ -134,7 +154,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
 
   useEffect(() => {
     const hasMealItems = cart.some((item) =>
-      Object.values(MEAL_IDS).some((meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id)
+      Object.values(MEAL_IDS).some(
+        (meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id
+      )
     );
 
     console.log("use effect ran: ", hasMealItems);
@@ -233,7 +255,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             qty,
           }));
 
-          const couponId = coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id || null;
+          const couponId =
+            coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id || null;
           const dataSend = {
             order_id: "",
             booking_id: auth.booking_id as string,
@@ -253,7 +276,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           if (result.status === 200) {
             let time_to_prepare = 0;
             result.data.details.items.forEach((element: any) => {
-              time_to_prepare = time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
+              time_to_prepare =
+                time_to_prepare > element.time_to_prepare
+                  ? time_to_prepare
+                  : element.time_to_prepare;
             });
             setTimeToPrepare(time_to_prepare + delay);
             setOpenScheduleModal(false);
@@ -266,7 +292,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               setErrorMessage(result.data.mealsRedeemed);
               setErrorType("meals");
             } else {
-              console.log("Can't place order, following items not available: ", result.data.notAvailable);
+              console.log(
+                "Can't place order, following items not available: ",
+                result.data.notAvailable
+              );
               setNotAvailable(result.data.notAvailable);
               setErrorType("notAvailable");
             }
@@ -312,7 +341,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           }
         });
 
-        const couponId = coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id || null;
+        const couponId =
+          coupons.find((coupon) => coupon.code === validatedCoupon)?.coupon_id || null;
         const dataSend = {
           order_id: "",
           booking_id: auth.booking_id as string,
@@ -332,7 +362,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
         if (result.status === 200) {
           let time_to_prepare = 0;
           result.data.details.items.forEach((element: any) => {
-            time_to_prepare = time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
+            time_to_prepare =
+              time_to_prepare > element.time_to_prepare ? time_to_prepare : element.time_to_prepare;
           });
           setTimeToPrepare(time_to_prepare + delay);
           setOpenScheduleModal(false);
@@ -344,7 +375,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             setErrorMessage(result.data.mealsRedeemed);
             setErrorType("meals");
           } else {
-            console.log("Can't place order, following items not available: ", result.data.notAvailable);
+            console.log(
+              "Can't place order, following items not available: ",
+              result.data.notAvailable
+            );
             setNotAvailable(result.data.notAvailable);
             setErrorType("notAvailable");
           }
@@ -365,7 +399,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const handleAddItem = (item: DataType) => {
     setCart((prevCart) => {
       // Check if the item is from the meals category
-      const isMealCategory = Object.values(MEAL_IDS).some((meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id);
+      const isMealCategory = Object.values(MEAL_IDS).some(
+        (meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id
+      );
 
       if (isMealCategory) {
         // If the item already exists in the cart, do not allow more than 1 qty
@@ -430,7 +466,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     const fetchBestSellers = async () => {
       const auth = (await getAuthCustomer()) as BookingInfoType;
       const fetchedItems: MenuItem[] = await fetchAllItems(auth?.booking_id || "");
-      const availableItems = fetchedItems.filter((item) => item.available && item.bestSeller && item.category !== "essentials");
+      const availableItems = fetchedItems.filter(
+        (item) => item.available && item.bestSeller && item.category !== "essentials"
+      );
       setBestseller(availableItems);
       setBestSellerLoading(false);
     };
@@ -455,7 +493,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               }}
             />
           </div>
-          <Close sx={{ color: "#111" }} className="relative top-0.5" onClick={() => setCartOpen(!cartOpen)} />
+          <Close
+            sx={{ color: "#111" }}
+            className="relative top-0.5"
+            onClick={() => setCartOpen(!cartOpen)}
+          />
         </div>
         <div className="bg-white m-2 shadow-md border mt-16 mb-4 rounded-2xl">
           <div className="p-3 text-2xl mt-1 font-semibold border-b border-dashed ">Your Cart</div>
@@ -470,7 +512,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                   </div>
 
                   <div className="relative border-red-500 border w-20 h-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                    <button onClick={() => handleRemoveItem(item)} className="absolute top-1 left-1">
+                    <button
+                      onClick={() => handleRemoveItem(item)}
+                      className="absolute top-1 left-1"
+                    >
                       <Remove fontSize="small" />
                     </button>
                     {item.qty}
@@ -483,7 +528,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                   {expandedId === item.item_id ? (
                     <div>
                       {item.description}{" "}
-                      <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                      <button
+                        className="font-medium text-red-500"
+                        onClick={() => toggleExpand(item.item_id)}
+                      >
                         show less
                       </button>
                     </div>
@@ -491,7 +539,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                     <div>
                       {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
                       {item.description.length > 10 && (
-                        <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                        <button
+                          className="font-medium text-red-500"
+                          onClick={() => toggleExpand(item.item_id)}
+                        >
                           read more
                         </button>
                       )}
@@ -503,7 +554,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 </div>
               </div>
             ))}
-            {freeItems.length > 0 && <div className="font-semibold  mt-3 mx-2 text-xl ">Free Items</div>}
+            {freeItems.length > 0 && (
+              <div className="font-semibold  mt-3 mx-2 text-xl ">Free Items</div>
+            )}
             {freeItems.map((item: CartType) => (
               <div key={item.item_id} className="p-3  border-b border-dashed">
                 <div className="flex text-base justify-between">
@@ -526,7 +579,10 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                   {expandedId === item.item_id ? (
                     <div>
                       {item.description}{" "}
-                      <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                      <button
+                        className="font-medium text-red-500"
+                        onClick={() => toggleExpand(item.item_id)}
+                      >
                         show less
                       </button>
                     </div>
@@ -534,14 +590,18 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                     <div>
                       {item.description.split(" ").slice(0, 10).join(" ")}...{" "}
                       {item.description.length > 10 && (
-                        <button className="font-medium text-red-500" onClick={() => toggleExpand(item.item_id)}>
+                        <button
+                          className="font-medium text-red-500"
+                          onClick={() => toggleExpand(item.item_id)}
+                        >
                           read more
                         </button>
                       )}
                     </div>
                   )}
                   <div className="flex font-medium justify-end w-24 text-sm ml-2">
-                    <span className="line-through">₹ {item.price * item.qty}</span> <span className="ml-2">₹ 0</span>
+                    <span className="line-through">₹ {item.price * item.qty}</span>{" "}
+                    <span className="ml-2">₹ 0</span>
                   </div>
                 </div>
               </div>
@@ -585,7 +645,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           ) : (
             <div className="text-sm mx-1 flex space-x-3 overflow-x-scroll hide-scrollbar font-medium text-gray-600">
               {bestSeller
-                .filter((item) => item.category !== "meals")
+                .filter((item) => item.category !== "complementary meals")
                 .map((item: MenuItem) => (
                   <div
                     key={item.item_id}
@@ -631,7 +691,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           setDiscount={setDiscount}
         />
 
-        {noteError && <div className="p-2 mx-3 text-red-600 text-sm">At least add 1 item to add a note for the restaurant</div>}
+        {noteError && (
+          <div className="p-2 mx-3 text-red-600 text-sm">
+            At least add 1 item to add a note for the restaurant
+          </div>
+        )}
         <div className="p-3 shadow-md border bg-white m-2 my-3 rounded-2xl font-medium text- ">
           <div className="justify-between flex space-x-4 ">
             <div className="flex space-x-3 items-center px-2">
@@ -681,36 +745,41 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
         <div className="p-2">
           {/* <div className="fixed px-3 bottom-0 py-5 z-10 bg-white w-full"></div> */}
           {placeOrderError && (
-            <div className="p-2 mx-3 text-center text-red-600 text-sm">At least add 1 item to place an order</div>
+            <div className="p-2 mx-3 text-center text-red-600 text-sm">
+              At least add 1 item to place an order
+            </div>
           )}
-          <div className="flex  gap-2">
-            <button
-              disabled={loading}
-              className="p-2 border py-[10px] disabled:bg-opacity-90 text-xl bg-white flex items-center justify-center  font-medium text-red-500 border-red-600 w-full rounded-full"
-              onClick={() => {
-                if (cart.length > 0 && cart.some((item: CartType) => item.category === "meals")) {
-                  handleScheduleMeal();
-                } else {
-                  setPlaceOrderError(true);
-                }
-              }}
-            >
-              <div>Schedule</div>
-            </button>
-            <button
-              disabled={loading}
-              className="p-2 py-[10px] border disabled:bg-opacity-90 text-xl flex items-center justify-center font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
-              onClick={() => {
-                if (cart.length > 0) {
-                  handlePlaceOrder();
-                } else {
-                  setPlaceOrderError(true);
-                }
-              }}
-            >
-              {loading && <CircularProgress color="danger" size="sm" />}
-              <div>Place Order</div>
-            </button>
+          <div>
+            {cart.filter((item: CartType) => item.category === "complementary meals").length !== 0 ? (
+              <button
+                disabled={loading}
+                className="p-2 py-[10px] border disabled:bg-opacity-90 text-xl flex items-center justify-center font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
+                onClick={() => {
+                  if (cart.length > 0 && cart.some((item: CartType) => item.category === "complementary meals")) {
+                    handleScheduleMeal();
+                  } else {
+                    setPlaceOrderError(true);
+                  }
+                }}
+              >
+                <div>Schedule</div>
+              </button>
+            ) : (
+              <button
+                disabled={loading}
+                className="p-2 py-[10px] border disabled:bg-opacity-90 text-xl flex items-center justify-center font-medium text-white border-red-600 w-full bg-red-500 rounded-full"
+                onClick={() => {
+                  if (cart.length > 0) {
+                    handlePlaceOrder();
+                  } else {
+                    setPlaceOrderError(true);
+                  }
+                }}
+              >
+                {loading && <CircularProgress color="danger" size="sm" />}
+                <div>Place Order</div>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -789,7 +858,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="flex flex-col h-32 items-center overflow-hidden ">
               <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
             </div>
-            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">Your Order has been placed!</div>
+            <div className="font-semibold text-2xl text-gray-500  font-montserrat text-center">
+              Your Order has been placed!
+            </div>
             <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
               Expected Waiting Time {timeToPrepare} mins
             </div>
@@ -840,7 +911,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               Your Order has been scheduled!
             </div>
             <div className="flex mt-2 mx-auto  font-montserrat text-gray-500 text-center font-medium ">
-              Your order will arrive on {dayjs(scheduleData.date).format("DD MMMM YYYY")} at {scheduleData.time} .
+              Your order will arrive on {dayjs(scheduleData.date).format("DD MMMM YYYY")} at{" "}
+              {scheduleData.time} .
             </div>
             <button
               onClick={() => {
@@ -892,8 +964,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               });
               return (
                 <div className="mt-2 mx-auto  font-montserrat text-gray-500 font-medium">
-                  The selected time is less than the required preparation time. You may need to wait for{" "}
-                  <span className="font-semibold">{max_time} minutes </span>or adjust the scheduled date and time.
+                  The selected time is less than the required preparation time. You may need to wait
+                  for <span className="font-semibold">{max_time} minutes </span>or adjust the
+                  scheduled date and time.
                   <br />
                   <br />
                   Click the button below to confirm your order.
@@ -929,7 +1002,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="">
               {errorType === "meals" && (
                 <span>
-                  {errorMessage.split(":")[0]}: <span className="font-extrabold">{errorMessage.split(":")[1]}</span>
+                  {errorMessage.split(":")[0]}:{" "}
+                  <span className="font-extrabold">{errorMessage.split(":")[1]}</span>
                 </span>
               )}
               {errorType === "notAvailable" && (
@@ -944,10 +1018,14 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                   {notAvailable.map((item_not_available, index: number) => (
                     <div key={index} className="flex justify-between border-b border-dashed">
                       <div className=" capitalize">{item_not_available.name}</div>
-                      <div className="mr-2">{cart.find((item) => item.item_id === item_not_available.item_id)?.qty}</div>
+                      <div className="mr-2">
+                        {cart.find((item) => item.item_id === item_not_available.item_id)?.qty}
+                      </div>
                     </div>
                   ))}
-                  <div className="mt-6 text-sm">Please try removing the above items and try again</div>
+                  <div className="mt-6 text-sm">
+                    Please try removing the above items and try again
+                  </div>
                 </>
               )}
             </div>
@@ -991,10 +1069,20 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           <DialogTitle>Schedule Your Order</DialogTitle>
           <DialogContent className="h-fit">
             {step === 0 && (
-              <ScheduleDate scheduleData={scheduleData} setScheduleData={setScheduleData} setStep={setStep} checkOut={checkOut} />
+              <ScheduleDate
+                scheduleData={scheduleData}
+                setScheduleData={setScheduleData}
+                setStep={setStep}
+                checkOut={checkOut}
+              />
             )}
             {step === 1 && (
-              <ScheduleTime scheduleData={scheduleData} setScheduleData={setScheduleData} setStep={setStep} checkOut={checkOut} />
+              <ScheduleTime
+                scheduleData={scheduleData}
+                setScheduleData={setScheduleData}
+                setStep={setStep}
+                checkOut={checkOut}
+              />
             )}
             {step === 2 && (
               <Confirmation
