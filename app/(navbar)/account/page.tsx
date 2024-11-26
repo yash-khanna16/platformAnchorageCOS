@@ -260,6 +260,30 @@ function Account() {
     });
   };
 
+  const MEAL_IDS: Record<"BREAKFAST" | "LUNCH" | "DINNER", { veg: string; nonVeg: string }> = {
+    BREAKFAST: {
+      veg: process.env.NEXT_PUBLIC_BREAKFAST_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_BREAKFAST_NON_VEG_ID || "",
+    },
+    LUNCH: {
+      veg: process.env.NEXT_PUBLIC_LUNCH_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_LUNCH_NON_VEG_ID || "",
+    },
+    DINNER: {
+      veg: process.env.NEXT_PUBLIC_DINNER_VEG_ID || "",
+      nonVeg: process.env.NEXT_PUBLIC_DINNER_NON_VEG_ID || "",
+    },
+  };
+
+  const hasMealItems = (order: OrderType): boolean => {
+    const res = order.items.some((item) =>
+      Object.values(MEAL_IDS).some(
+        (meal) => meal.veg === item.itemId || meal.nonVeg === item.itemId || item.itemId === process.env.NEXT_PUBLIC_TEA_ID
+      )
+    );
+    return res;
+  };
+
   const calculateTotal = (items: { itemQty: number; itemPrice: number }[]) => {
     return items.reduce((total, item) => total + item.itemQty * item.itemPrice, 0);
   };
@@ -339,14 +363,19 @@ function Account() {
                             <span className=" ">₹{order.discount}</span>
                           </div>
                         )}
-                        <div className="flex justify-between">
-                          Platform Fee
-                          <span className=" ">₹{platformFee}</span>
-                        </div>
+                        {!hasMealItems(order) && (
+                          <div className="flex justify-between">
+                            Platform Fee
+                            <span className=" ">₹{platformFee}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-red-600">
                           Total
                           <span className=" ">
-                            ₹{Number(calculateTotal(order.items).toFixed(2)) - order.discount + platformFee}
+                            ₹
+                            {Number(calculateTotal(order.items).toFixed(2)) -
+                              order.discount +
+                              (hasMealItems(order) ? 0 : platformFee)}
                           </span>
                         </div>
                       </div>
@@ -449,14 +478,19 @@ function Account() {
                               <span className=" ">₹{order.discount}</span>
                             </div>
                           )}
-                          <div className="flex justify-between">
-                            Platform Fee
-                            <span className=" ">₹{platformFee}</span>
-                          </div>
+                          {!hasMealItems(order) && (
+                            <div className="flex justify-between">
+                              Platform Fee
+                              <span className=" ">₹{platformFee}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between text-red-600">
                             Total
                             <span className=" ">
-                              ₹{Number(calculateTotal(order.items).toFixed(2)) - order.discount + platformFee}
+                              ₹
+                              {Number(calculateTotal(order.items).toFixed(2)) -
+                                order.discount +
+                                (hasMealItems(order) ? 0 : platformFee)}
                             </span>
                           </div>
                         </div>
