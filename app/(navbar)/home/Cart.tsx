@@ -271,7 +271,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           };
           sendGAEvent("event", "placedOrder", { value: dataSend });
           console.log(delay);
-          const result = await placeOrder({ ...dataSend, delay: minutesDifference });
+          const result = await placeOrder({ ...dataSend, delay: minutesDifference - max_time });
           console.log(result);
           if (result.status === 200) {
             let time_to_prepare = 0;
@@ -965,25 +965,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               return (
                 <div className="mt-2 mx-auto  font-montserrat text-gray-500 font-medium">
                   The selected time is less than the required preparation time. You may need to wait
-                  for <span className="font-semibold">{max_time} minutes </span>or adjust the
-                  scheduled date and time.
-                  <br />
-                  <br />
-                  Click the button below to confirm your order.
+                  for <span className="font-semibold">{max_time} minutes </span>so please adjust the
+                  scheduled date and time accordingly .
                 </div>
               );
             })()}
-
-            {/* Place Order Button */}
-            <button
-              onClick={() => {
-                handlePlaceOrder();
-              }}
-              className="p-3 border font-montserrat font-medium text-white border-red-600 w-full bg-red-500 mt-8 rounded-full"
-            >
-              Place Order
-              <ArrowForward />
-            </button>
           </DialogContent>
         </ModalDialog>
       </Modal>
