@@ -411,3 +411,26 @@ export async function checkinGuest(booking_id: string, documentURL: string|null,
     throw error;
   }
 }
+export async function fetchGuestData(guestEmail:string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchGuestDataByEmail`, {
+      method: "get",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        guestemail:guestEmail
+      },
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
