@@ -155,7 +155,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   useEffect(() => {
     const hasMealItems = cart.some((item) =>
       Object.values(MEAL_IDS).some(
-        (meal) => meal.veg === item.item_id || meal.nonVeg === item.item_id
+        (meal) => (meal.veg === item.item_id || meal.nonVeg === item.item_id || item.item_id === process.env.NEXT_PUBLIC_TEA_ID)
       )
     );
 
