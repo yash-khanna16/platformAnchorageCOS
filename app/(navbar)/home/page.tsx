@@ -183,36 +183,42 @@ function Home() {
           nonVeg: process.env.NEXT_PUBLIC_DINNER_NON_VEG_ID || "",
         },
       };
-
+  
       // Determine if the item belongs to a meal category
       const mealCategory = Object.keys(MEAL_IDS).find((category) => {
         const meal = MEAL_IDS[category as keyof typeof MEAL_IDS];
         return meal.veg === item.item_id || meal.nonVeg === item.item_id;
       }) as keyof typeof MEAL_IDS | undefined;
-
+  
       if (mealCategory) {
         const meal = MEAL_IDS[mealCategory];
-
-        // Check if meal already exists in the cart with qty > 1
-        const existingMeal = prevSelected.find(
-          (cartItem) => (cartItem.item_id === meal.veg || cartItem.item_id === meal.nonVeg) && cartItem.qty > 0
-        );
-
+  
+        // Check if there is already an item from the same meal category in the cart
+        const existingMeal = prevSelected.find((cartItem) => {
+          return (Object.keys(MEAL_IDS).find((category) => {
+            const meal = MEAL_IDS[category as keyof typeof MEAL_IDS];
+            return meal.veg === cartItem.item_id || meal.nonVeg === cartItem.item_id;
+          }) as keyof typeof MEAL_IDS | undefined);
+        });
+  
         if (existingMeal) {
           setAlert(true);
-          setMessage("You can only add one of this meal");
+          setMessage(`You can only add one item from this category.`);
+          return prevSelected; // Do not modify the cart
         } else {
+          // Add the new meal item to the cart, replacing any existing meal item
           setOpenMealsModal(true);
+          return [
+            ...prevSelected.filter(
+              (cartItem) =>
+                !Object.values(MEAL_IDS[mealCategory]).includes(cartItem.item_id) // Remove all items from the same meal category
+            ),
+            { ...item, qty: 1 }, // Add the new item with qty = 1
+          ];
         }
-
-        // Replace the opposite type and ensure qty is 1
-        return [
-          ...prevSelected.filter((cartItem) => cartItem.item_id !== meal.veg && cartItem.item_id !== meal.nonVeg),
-          { ...item, qty: 1 }, // Add the new item with qty = 1
-        ];
       }
-
-      // For non-meal items or meal items that don't need replacement logic
+  
+      // For non-meal items, handle as usual
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
         // If the item already exists and is not a meal, increase the quantity
@@ -224,6 +230,7 @@ function Home() {
       }
     });
   };
+  
 
   const handleRemoveItem = (item: MenuItem) => {
     setCart((prevSelected) => {
