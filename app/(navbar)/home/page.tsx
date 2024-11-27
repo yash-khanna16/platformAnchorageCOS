@@ -84,7 +84,7 @@ function Home() {
   const [filterButtonOn, setFilterButtonOn] = useState(false);
   const [openMealsModal, setOpenMealsModal] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
-  const [showMeals, setShowMeals] = useState(false);
+  const [showMeals, setShowMeals] = useState(true);
 
   const params = useSearchParams();
   const room = params.get("room");
@@ -122,8 +122,8 @@ function Home() {
           }
         }
         const guestData: guestDataType = await fetchGuestData(auth.guest_email);
-        if (guestData.company.toLowerCase() !== "mmt" && guestData.company.toLowerCase() !== "personal") {
-          setShowMeals(true);
+        if (guestData.company.toLowerCase() === "mmt" && guestData.company.toLowerCase() === "personal") {
+          setShowMeals(false);
         }
       }
     };
