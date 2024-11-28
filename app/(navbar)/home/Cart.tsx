@@ -104,7 +104,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [total, setTotal] = useState(0);
   const [discount, setDiscount] = useState<number>(0);
   const [step, setStep] = useState<number>(0);
-  const [scheduleData, setScheduleData] = useState<ScheduleType>({ date: "", time: "00:00" });
+  const [scheduleData, setScheduleData] = useState<ScheduleType>({ date: "", time: "13:00" });
   const [showTotal, setShowTotal] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [scheduleConfirmModal, setScheduleConfirmModal] = useState(false);
@@ -953,7 +953,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             {/* Error Message Header */}
             <div className="flex flex-col h-32 items-center overflow-hidden">
               <Cancel className="h-20 scale-[300%] text-red-600" />
-              <div className="font-semibold text-2xl text-center">Error scheduling order</div>
+              <div className="font-semibold text-2xl text-center text-slate-600 font-montserrat">Error scheduling order</div>
             </div>
             {(() => {
               let max_time = 0;
@@ -963,9 +963,9 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 }
               });
               return (
-                <div className="mt-2 mx-auto  font-montserrat text-gray-500 font-medium">
+                <div className="mt-2 mx-auto  font-montserrat text-slate-600 font-medium">
                   The selected time is less than the required preparation time. You may need to wait
-                  for <span className="font-semibold">{max_time} minutes </span>so please adjust the
+                  for <span className="font-bold">{max_time} minutes </span>so please adjust the
                   scheduled date and time accordingly .
                 </div>
               );
@@ -1052,7 +1052,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
       >
         <ModalDialog style={{ width: "95vw" }}>
           <ModalClose style={{ zIndex: "10" }} />
-          <DialogTitle>Schedule Your Order</DialogTitle>
+          <DialogTitle> {step === 0 && 'Select Date'} {step===1 && 'Select Time'} {step === 2 && 'Confirm Date and Time'} </DialogTitle>
           <DialogContent className="h-fit">
             {step === 0 && (
               <ScheduleDate

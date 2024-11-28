@@ -27,15 +27,15 @@ function ScheduleDate({
 
   return (
     <>
-      <div className="text-red-500 font-medium text-lg">Select schedule date for your order:</div>
-      <div className="text-red-500 font-medium">
+      {/* <div className="text-red-500 font-medium text-lg">Select schedule date for your order:</div> */}
+      {/* <div className="text-red-500 text-lg font-medium">
         Selected Date:{" "}
         <span className="text-gray-500 font-medium">
           {scheduleData.date === ""
             ? "Nothing Selected"
             : dayjs(scheduleData.date).format("DD MMMM YYYY")}
         </span>
-      </div>
+      </div> */}
 
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DateCalendar
@@ -50,6 +50,7 @@ function ScheduleDate({
         />
       </LocalizationProvider>
       <button
+      disabled={scheduleData.date === ""}
         onClick={() => {
           if (scheduleData.date) {
             setStep(1);
@@ -58,7 +59,7 @@ function ScheduleDate({
             setAlert(true);
           }
         }}
-        className=" p-2 mb-2 font-medium bg-red-100 border px-5 border-red-500 text-red-500 rounded-full"
+        className=" p-2 mb-2 disabled:bg-gray-100 disabled:border-gray-500 disabled:text-gray-400 font-medium bg-red-100 border px-5 border-red-500 text-red-500 rounded-full"
       >
         Confirm Date
       </button>
