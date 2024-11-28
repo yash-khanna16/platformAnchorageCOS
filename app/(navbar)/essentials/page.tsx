@@ -9,7 +9,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Cart from "./EssentialCart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEssentialsCart } from "@/lib/EssentialsCartContext";
-import { sendGAEvent } from '@next/third-parties/google'
+import { sendGAEvent } from "@next/third-parties/google";
 
 type MenuItem = {
   available: boolean;
@@ -44,8 +44,8 @@ function Essentials() {
   useEffect(() => {
     const getItems = async () => {
       try {
-        const fetchedItems: MenuItem[] = await fetchAllItems();
-        const availableItems = fetchedItems.filter((item) => item.available === true && item.category==="essentials");
+        const fetchedItems: MenuItem[] = await fetchAllItems("");
+        const availableItems = fetchedItems.filter((item) => item.available === true && item.category === "essentials");
         setItems(availableItems);
         setLoading(false);
       } catch (error) {
@@ -146,10 +146,7 @@ function Essentials() {
                           {item.description.split(" ").slice(0, 15).join(" ")}
                           {item.description.split(" ").length > 15 && "..."}
                           {item.description.split(" ").length > 15 && (
-                            <button
-                              className="font-medium text-red-500 text-xs"
-                              onClick={() => toggleExpand(item.item_id)}
-                            >
+                            <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
                               read more
                             </button>
                           )}
@@ -187,7 +184,7 @@ function Essentials() {
         <div className="sticky bottom-20 rounded-2xl cursor-pointer z-50 bg-red-500 font-semibold text-center w-[95%] mx-auto text-white py-4">
           <div
             onClick={() => {
-              sendGAEvent('event', 'openCartEssentials', { value: cartOpen })
+              sendGAEvent("event", "openCartEssentials", { value: cartOpen });
               setCartOpen(true);
             }}
           >

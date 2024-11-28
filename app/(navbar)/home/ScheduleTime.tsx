@@ -44,15 +44,15 @@ function ScheduleTime({
 
   return (
     <div>
-      <div className="text-red-500 font-medium text-lg">Select schedule time for your order:</div>
-      <div className="text-red-500 font-medium">
+      {/* <div className="text-red-500 font-medium text-lg">Select schedule time for your order:</div> */}
+      {/* <div className="text-red-500 font-medium">
         Selected Date:{" "}
         <span className="text-gray-500 font-medium">
           {scheduleData.date === ""
             ? "Nothing Selected"
             : dayjs(scheduleData.date).format("DD MMMM YYYY")}
-        </span>
-      </div>
+        </span> */}
+      {/* </div> */}
       <div className="flex text-2xl justify-center gap-1 mt-3">
         <div
           className="bg-gray-200  p-1 px-3 flex items-center rounded-2xl cursor-pointer"

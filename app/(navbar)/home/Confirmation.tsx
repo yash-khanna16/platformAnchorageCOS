@@ -22,12 +22,12 @@ function Confirmation({
 }) {
   return (
     <div>
-      <div className="flex flex-col h-32 items-center overflow-hidden ">
+      {/* <div className="flex flex-col h-32 items-center overflow-hidden ">
         <Lottie className="h-full scale-150" animationData={animationData} loop={false} />
-      </div>
-      <div className="text-red-500 font-medium text-lg">
+      </div> */}
+      {/* <div className="text-red-500 font-medium text-lg">
         Please confirm the date and time entered
-      </div>
+      </div> */}
       <div>
         <div className="text-red-500 font-medium">
           Selected Date:{" "}
