@@ -9,6 +9,7 @@ import { sendGAEvent } from "@next/third-parties/google";
 
 export default function Confirmation({ selectedBooking }: { selectedBooking: BookingDataType }) {
   const router = useRouter();
+  const restrictedCompanies = ["PERSONAL","MMT BOOKING","MMT"]
   return (
     <div className=" font-montserrat w-screen h-screen bg-white rounded-2xl mx-auto px-8  space-y-8">
       {/* Success Header */}
@@ -40,6 +41,17 @@ export default function Confirmation({ selectedBooking }: { selectedBooking: Boo
           className="w-full bg-red-600 hover:bg-red-700 text-sm text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center"
         >
           Tap here to claim your coupon
+          <ArrowForward className="text-xl" />
+        </button>
+        {!restrictedCompanies.includes(selectedBooking.company)}
+        <button
+          onClick={() => {
+            sendGAEvent("event", "claim-checkin-coupon");
+            router.push(`/home?room=${selectedBooking.room}`);
+          }}
+          className="w-full text-red-600 hover:bg-red-700 text-sm bg-red-50 border border-red-600 font-semibold py-3 px-6 rounded-lg flex items-center justify-center"
+        >
+          Kindly book your complementary meals.
           <ArrowForward className="text-xl" />
         </button>
       </div>

@@ -65,10 +65,12 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
           booking_id: auth.booking_id as string,
           room: room,
           remarks: noteContentConfirm,
+          time_to_prepare: timeToPrepare,
           created_at: "",
           status: "Placed",
           items: items,
           coupon_id: null,
+          delay: 0,
           email: auth.email as string
         };
         sendGAEvent('event', 'placedOrder', { value: dataSend })

@@ -71,13 +71,14 @@ export async function verifyOTP(email: string, otp: string) {
     throw error;
   }
 }
-export async function fetchAllItems() {
+export async function fetchAllItems(bookingId: string) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchAllItems`, {
       method: "GET",
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
+        bookingid: bookingId
       },
       cache: "no-cache",
     });
@@ -104,8 +105,11 @@ export async function placeOrder(dataSend: {
   email: string;
   items: { item_id: string; qty: number }[];
   coupon_id: string | null;
-}) {
+  time_to_prepare:number;
+  delay:number;
+},) {
   try {
+    console.log(dataSend);
     const response = await fetch(`${process.env.BACKEND_URL}/api/cos/addOrder`, {
       method: "POST",
       mode: "cors",
@@ -393,6 +397,29 @@ export async function checkinGuest(booking_id: string, documentURL: string|null,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({booking_id: booking_id, document_url: documentURL, email: email, room: room, name: name, document_url_back: documentURLBack}),
+      cache: "no-cache",
+    });
+
+    const data = await response.json(); // Parse the JSON response
+    if (!response.ok) {
+      const error = new Error(await response.text());
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+export async function fetchGuestData(guestEmail:string) {
+  try {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/cos/fetchGuestDataByEmail`, {
+      method: "get",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        guestemail:guestEmail
+      },
       cache: "no-cache",
     });
 

@@ -1,12 +1,27 @@
 "use client";
-import { Add, ArrowForward, AutoAwesome, Close, Info, Remove, TrendingDown, TrendingUp } from "@mui/icons-material";
+import {
+  Add,
+  ArrowForward,
+  AutoAwesome,
+  Close,
+  Info,
+  Remove,
+  TrendingDown,
+  TrendingUp,
+} from "@mui/icons-material";
 import Image from "next/image";
 import Logo from "../../assets/favicon.png";
 import Veg from "../../assets/veg.png";
 import Nonveg from "../../assets/nonveg.png";
 import React, { useEffect, useState } from "react";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import { fetchAllItems, fetchFeedbackCOS, fetchOrdersByBookingId, insertFeedbackCOS } from "../../actions/api";
+import {
+  fetchAllItems,
+  fetchFeedbackCOS,
+  fetchGuestData,
+  fetchOrdersByBookingId,
+  insertFeedbackCOS,
+} from "../../actions/api";
 import Cart from "./Cart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
@@ -16,7 +31,7 @@ import { getAuthCustomer } from "@/app/actions/cookie";
 import { BookingInfoType } from "../timeline/page";
 import Lottie from "lottie-react";
 import animationdata from "@/app/assets/happy.json";
-import { Switch } from "@mui/material";
+import { Button, Switch } from "@mui/material";
 import { sendGAEvent } from "@next/third-parties/google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Filter from "@/app/assets/filter.png";
@@ -33,6 +48,16 @@ type MenuItem = {
   category_id: string;
   sequence: number;
   bestSeller: boolean;
+  isMealAvailable: boolean | undefined;
+};
+type guestDataType = {
+  email: string;
+  name: string;
+  phone: string;
+  company: string;
+  vessel: string;
+  rank: string;
+  id: string;
 };
 
 export type CartType = MenuItem & { quantity: number };
@@ -57,7 +82,9 @@ function Home() {
   const [filterOn, setFilterOn] = useState(false);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [filterButtonOn, setFilterButtonOn] = useState(false);
+  const [openMealsModal, setOpenMealsModal] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const [showMeals, setShowMeals] = useState(true);
 
   const params = useSearchParams();
   const room = params.get("room");
@@ -94,6 +121,11 @@ function Home() {
             if (shouldShowModal) setFeedback(true);
           }
         }
+        const guestData: guestDataType = await fetchGuestData(auth.guest_email);
+        // console.log("guestData: ", guestData.company.toLowerCase())
+        if (guestData.company.toLowerCase() === "mmt booking" || guestData.company.toLowerCase() === "mmt" || guestData.company.toLowerCase() === "personal") {
+          setShowMeals(false);
+        }
       }
     };
 
@@ -110,7 +142,8 @@ function Home() {
   useEffect(() => {
     const getItems = async () => {
       try {
-        const fetchedItems: MenuItem[] = await fetchAllItems();
+        const auth = (await getAuthCustomer()) as BookingInfoType;
+        const fetchedItems: MenuItem[] = await fetchAllItems(auth?.booking_id || "");
         console.log("items: ", fetchedItems);
         const availableItems = fetchedItems.filter((item) => item.available);
         const itemsByCategory = availableItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
@@ -148,7 +181,8 @@ function Home() {
     if (
       event &&
       event.type === "keydown" &&
-      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
+      ((event as React.KeyboardEvent).key === "Tab" ||
+        (event as React.KeyboardEvent).key === "Shift")
     ) {
       return;
     }
@@ -166,8 +200,59 @@ function Home() {
 
   const handleAddItem = (item: MenuItem) => {
     setCart((prevSelected) => {
+      const MEAL_IDS: Record<"BREAKFAST" | "LUNCH" | "DINNER", { veg: string; nonVeg: string }> = {
+        BREAKFAST: {
+          veg: process.env.NEXT_PUBLIC_BREAKFAST_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_BREAKFAST_NON_VEG_ID || "",
+        },
+        LUNCH: {
+          veg: process.env.NEXT_PUBLIC_LUNCH_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_LUNCH_NON_VEG_ID || "",
+        },
+        DINNER: {
+          veg: process.env.NEXT_PUBLIC_DINNER_VEG_ID || "",
+          nonVeg: process.env.NEXT_PUBLIC_DINNER_NON_VEG_ID || "",
+        },
+      };
+  
+      // Determine if the item belongs to a meal category
+      const mealCategory = Object.keys(MEAL_IDS).find((category) => {
+        const meal = MEAL_IDS[category as keyof typeof MEAL_IDS];
+        return meal.veg === item.item_id || meal.nonVeg === item.item_id;
+      }) as keyof typeof MEAL_IDS | undefined;
+  
+      if (mealCategory) {
+        const meal = MEAL_IDS[mealCategory];
+  
+        // Check if there is already an item from the same meal category in the cart
+        const existingMeal = prevSelected.find((cartItem) => {
+          return (Object.keys(MEAL_IDS).find((category) => {
+            const meal = MEAL_IDS[category as keyof typeof MEAL_IDS];
+            return meal.veg === cartItem.item_id || meal.nonVeg === cartItem.item_id;
+          }) as keyof typeof MEAL_IDS | undefined);
+        });
+  
+        if (existingMeal) {
+          setAlert(true);
+          setMessage(`You can only add one item from this category.`);
+          return prevSelected; // Do not modify the cart
+        } else {
+          // Add the new meal item to the cart, replacing any existing meal item
+          setOpenMealsModal(true);
+          return [
+            ...prevSelected.filter(
+              (cartItem) =>
+                !Object.values(MEAL_IDS[mealCategory]).includes(cartItem.item_id) // Remove all items from the same meal category
+            ),
+            { ...item, qty: 1 }, // Add the new item with qty = 1
+          ];
+        }
+      }
+  
+      // For non-meal items, handle as usual
       const existingItem = prevSelected.find((cartItem) => cartItem.item_id === item.item_id);
       if (existingItem) {
+        // If the item already exists and is not a meal, increase the quantity
         return prevSelected.map((cartItem) =>
           cartItem.item_id === item.item_id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem
         );
@@ -176,6 +261,7 @@ function Home() {
       }
     });
   };
+  
 
   const handleRemoveItem = (item: MenuItem) => {
     setCart((prevSelected) => {
@@ -198,13 +284,19 @@ function Home() {
     console.log(filter);
     let filtered;
     const itemsArray: MenuItem[] = Object.values(items).flat();
+
     if (filterData === "Best") {
       filtered = itemsArray.filter((element: MenuItem) => element.bestSeller);
     } else if (filterData === "Up") {
-      filtered = itemsArray.sort((a: MenuItem, b: MenuItem) => a.price - b.price);
+      filtered = [...itemsArray].sort((a: MenuItem, b: MenuItem) => a.price - b.price);
     } else {
-      filtered = itemsArray.sort((a: MenuItem, b: MenuItem) => b.price - a.price);
+      filtered = [...itemsArray].sort((a: MenuItem, b: MenuItem) => b.price - a.price);
     }
+
+    // Remove complementary meals
+    filtered = filtered.filter((item: MenuItem) => item.category !== "complementary meals");
+
+    console.log(filtered);
     setFilteredItems(filtered);
     setFilter(filterData);
     setFilterOn(true);
@@ -238,8 +330,18 @@ function Home() {
   return (
     <div className="font-montserrat">
       <div>
-        <SwipeableDrawer anchor={"bottom"} open={cartOpen} onClose={toggleDrawer(false)} onOpen={toggleDrawer(true)}>
-          <Cart cartOpen={cartOpen} setCartOpen={setCartOpen} expandedId={expandedId} toggleExpand={toggleExpand} />
+        <SwipeableDrawer
+          anchor={"bottom"}
+          open={cartOpen}
+          onClose={toggleDrawer(false)}
+          onOpen={toggleDrawer(true)}
+        >
+          <Cart
+            cartOpen={cartOpen}
+            setCartOpen={setCartOpen}
+            expandedId={expandedId}
+            toggleExpand={toggleExpand}
+          />
         </SwipeableDrawer>
       </div>
       <div className="sticky top-0 z-10 bg-white pb-4">
@@ -272,7 +374,10 @@ function Home() {
             </div>
           </div>
 
-          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500"> Room: {room} </div>
+          <div className="text-red-500 border p-1 rounded-2xl px-2 text-sm font-medium border-red-500">
+            {" "}
+            Room: {room}{" "}
+          </div>
         </div>
 
         <div>
@@ -287,7 +392,13 @@ function Home() {
                 {filterButtonOn ? (
                   <Close style={{ height: "30" }} />
                 ) : (
-                  <Image alt="filter" className=" p-1" src={Filter} height={55} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                  <Image
+                    alt="filter"
+                    className=" p-1"
+                    src={Filter}
+                    height={55}
+                    style={{ maxHeight: "30px", maxWidth: "30px" }}
+                  />
                 )}
                 <div
                   id="filterDropDown"
@@ -335,25 +446,32 @@ function Home() {
                 </div>
               ) : (
                 <div className="text-sm flex space-x-3 overflow-scroll hide-scrollbar font-medium px-2 text-gray-600">
-                  {categories.map((element, index) => (
-                    <span
-                      key={index}
-                      className={`${
-                        navbar === element ? "text-red-600 border-red-400" : ""
-                      } capitalize border min-w-fit px-3 py-1 rounded-2xl cursor-pointer`}
-                      onClick={() => {
-                        setNavbar(element);
-                        sendGAEvent("event", "categoryChange", { value: element });
-                        handleClick(element);
-                        // setIsClicked(true);
-                        // setTimeout(() => {
-                        //   setIsClicked(false);
-                        // }, 500);
-                      }}
-                    >
-                      {element}
-                    </span>
-                  ))}
+                  {categories.map((element, index) => {
+                    // Check if the element is "complementary meals" and whether to show it
+                    if (element === "complementary meals" && !showMeals) {
+                      return null; // Don't render if showMeals is false
+                    }
+
+                    return (
+                      <span
+                        key={index}
+                        className={`${
+                          navbar === element ? "text-red-600 border-red-400" : ""
+                        } capitalize border min-w-fit px-3 py-1 rounded-2xl cursor-pointer`}
+                        onClick={() => {
+                          setNavbar(element);
+                          sendGAEvent("event", "categoryChange", { value: element });
+                          handleClick(element);
+                          // setIsClicked(true);
+                          // setTimeout(() => {
+                          //   setIsClicked(false);
+                          // }, 500);
+                        }}
+                      >
+                        {element}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -493,7 +611,10 @@ function Home() {
                     <div className="my-2">
                       {item.bestSeller && (
                         <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
-                          <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
+                          <AutoAwesomeIcon
+                            className="inline relative -top-0.5"
+                            style={{ height: "15px", width: "15px" }}
+                          />
                           <span className="ml-1">Bestseller</span>
                         </span>
                       )}
@@ -513,7 +634,10 @@ function Home() {
                         {expandedId === item.item_id ? (
                           <div className="text-sm leading-5">
                             {item.description}{" "}
-                            <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                            <button
+                              className="font-medium text-red-500 text-xs"
+                              onClick={() => toggleExpand(item.item_id)}
+                            >
                               show less
                             </button>
                           </div>
@@ -522,7 +646,10 @@ function Home() {
                             {item.description.split(" ").slice(0, 15).join(" ")}
                             {item.description.split(" ").slice(0, 15).length > 10 && "..."}
                             {item.description.split(" ").length > 10 && (
-                              <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
+                              <button
+                                className="font-medium text-red-500 text-xs"
+                                onClick={() => toggleExpand(item.item_id)}
+                              >
                                 read more
                               </button>
                             )}
@@ -533,17 +660,29 @@ function Home() {
                     <div className="font-medium ml-3 mt-1">
                       {selectedItem ? (
                         <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                          <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
+                          <button
+                            onClick={() => handleRemoveItem(item)}
+                            className="absolute top-2 left-1"
+                          >
                             <Remove fontSize="small" />
                           </button>
                           {selectedItem.qty}
-                          <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
+                          <button
+                            onClick={() => {
+                              console.log(item.category);
+                              handleAddItem(item);
+                            }}
+                            className="absolute top-2 right-1"
+                          >
                             <Add fontSize="small" />
                           </button>
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleAddItem(item)}
+                          onClick={() => {
+                            console.log(item.category);
+                            handleAddItem(item);
+                          }}
                           className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
                         >
                           ADD
@@ -557,88 +696,206 @@ function Home() {
         </>
       ) : (
         <div className="">
-          {categories.map((key, index) => (
-            <div key={index} id={key} className="px-3">
-              <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
-              {items[key]
-                .filter((item) => {
-                  if (vegOnly) {
-                    if (item.type === "veg") return item;
-                  } else {
-                    return item;
-                  }
-                })
-                .map((item) => {
-                  const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
-                  return (
-                    <div key={item.item_id} className="p-2 border-b border-gray-300 border-dashed">
-                      <div className="flex justify-between items-center">
-                        <div className="my-2">
-                          {item.bestSeller && (
-                            <span className=" border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium  rounded-2xl text-red-600 ">
-                              <AutoAwesomeIcon className="inline relative -top-0.5" style={{ height: "15px", width: "15px" }} />
-                              <span className="ml-1">Bestseller</span>
-                            </span>
-                          )}
-                          <div className="flex items-center mt-1">
-                            <Image
-                              src={item.type === "veg" ? Veg : Nonveg}
-                              alt={item.type}
-                              className="inline relative "
-                              height={15}
-                              width={15}
-                            />
-
-                            <span className="text-xl  ml-1 font-medium">{item.name}</span>
+          {categories.map((key, index) => {
+            if (key === "complementary meals") {
+              return showMeals ? (
+                <div key={index} id={key} className="px-3">
+                  <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
+                  {items[key]
+                    .filter((item) => (vegOnly ? item.type === "veg" : true))
+                    .map((item) => {
+                      const selectedItem = cart.find(
+                        (cartItem) => cartItem.item_id === item.item_id
+                      );
+                      return (
+                        <div
+                          key={item.item_id}
+                          className="p-2 border-b border-gray-300 border-dashed"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="my-2">
+                              {item.bestSeller && (
+                                <span className="border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium rounded-2xl text-red-600">
+                                  <AutoAwesomeIcon
+                                    className="inline relative -top-0.5"
+                                    style={{ height: "15px", width: "15px" }}
+                                  />
+                                  <span className="ml-1">Bestseller</span>
+                                </span>
+                              )}
+                              <div className="flex items-center mt-1">
+                                <Image
+                                  src={item.type === "veg" ? Veg : Nonveg}
+                                  alt={item.type}
+                                  className="inline relative"
+                                  height={15}
+                                  width={15}
+                                />
+                                <span className="text-xl ml-1 font-medium">{item.name}</span>
+                              </div>
+                              <div className="text-sm my-2">₹ {item.price}</div>
+                              <div className="mt-3">
+                                {expandedId === item.item_id ? (
+                                  <div className="text-sm leading-5">
+                                    {item.description}{" "}
+                                    <button
+                                      className="font-medium text-red-500 text-xs"
+                                      onClick={() => toggleExpand(item.item_id)}
+                                    >
+                                      show less
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="text-sm leading-5">
+                                    {item.description.split(" ").slice(0, 15).join(" ")}
+                                    {item.description.split(" ").length > 10 && "..." && (
+                                      <button
+                                        className="font-medium text-red-500 text-xs"
+                                        onClick={() => toggleExpand(item.item_id)}
+                                      >
+                                        read more
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="font-medium ml-3 mt-1">
+                              {selectedItem ? (
+                                <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                                  <button
+                                    onClick={() => handleRemoveItem(item)}
+                                    className="absolute top-2 left-1"
+                                  >
+                                    <Remove fontSize="small" />
+                                  </button>
+                                  {selectedItem.qty}
+                                  <button
+                                    onClick={() => {
+                                      handleAddItem(item);
+                                    }}
+                                    className="absolute top-2 right-1"
+                                  >
+                                    <Add fontSize="small" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    handleAddItem(item);
+                                  }}
+                                  className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
+                                >
+                                  ADD
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-sm my-2">₹ {item.price}</div>
-                          <div className="mt-3">
-                            {expandedId === item.item_id ? (
-                              <div className="text-sm leading-5">
-                                {item.description}{" "}
-                                <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
-                                  show less
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : null;
+            }
+
+            // Render other categories
+            return (
+              <div key={index} id={key} className="px-3">
+                <div className="my-2 text-2xl font-semibold mx-2 capitalize">{key}</div>
+                {items[key]
+                  .filter((item) => (vegOnly ? item.type === "veg" : true))
+                  .map((item) => {
+                    const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
+                    return (
+                      <div
+                        key={item.item_id}
+                        className="p-2 border-b border-gray-300 border-dashed"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="my-2">
+                            {item.bestSeller && (
+                              <span className="border-red-500 p-1 px-2 border my-2 bg-yellow-50 text-sm font-medium rounded-2xl text-red-600">
+                                <AutoAwesomeIcon
+                                  className="inline relative -top-0.5"
+                                  style={{ height: "15px", width: "15px" }}
+                                />
+                                <span className="ml-1">Bestseller</span>
+                              </span>
+                            )}
+                            <div className="flex items-center mt-1">
+                              <Image
+                                src={item.type === "veg" ? Veg : Nonveg}
+                                alt={item.type}
+                                className="inline relative"
+                                height={15}
+                                width={15}
+                              />
+                              <span className="text-xl ml-1 font-medium">{item.name}</span>
+                            </div>
+                            <div className="text-sm my-2">₹ {item.price}</div>
+                            <div className="mt-3">
+                              {expandedId === item.item_id ? (
+                                <div className="text-sm leading-5">
+                                  {item.description}{" "}
+                                  <button
+                                    className="font-medium text-red-500 text-xs"
+                                    onClick={() => toggleExpand(item.item_id)}
+                                  >
+                                    show less
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="text-sm leading-5">
+                                  {item.description.split(" ").slice(0, 15).join(" ")}
+                                  {item.description.split(" ").length > 10 && "..." && (
+                                    <button
+                                      className="font-medium text-red-500 text-xs"
+                                      onClick={() => toggleExpand(item.item_id)}
+                                    >
+                                      read more
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="font-medium ml-3 mt-1">
+                            {selectedItem ? (
+                              <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                                <button
+                                  onClick={() => handleRemoveItem(item)}
+                                  className="absolute top-2 left-1"
+                                >
+                                  <Remove fontSize="small" />
+                                </button>
+                                {selectedItem.qty}
+                                <button
+                                  onClick={() => {
+                                    handleAddItem(item);
+                                  }}
+                                  className="absolute top-2 right-1"
+                                >
+                                  <Add fontSize="small" />
                                 </button>
                               </div>
                             ) : (
-                              <div className="text-sm leading-5">
-                                {item.description.split(" ").slice(0, 15).join(" ")}
-                                {item.description.split(" ").slice(0, 15).length > 10 && "..."}
-                                {item.description.split(" ").length > 10 && (
-                                  <button className="font-medium text-red-500 text-xs" onClick={() => toggleExpand(item.item_id)}>
-                                    read more
-                                  </button>
-                                )}
-                              </div>
+                              <button
+                                onClick={() => {
+                                  handleAddItem(item);
+                                }}
+                                className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
+                              >
+                                ADD
+                              </button>
                             )}
                           </div>
                         </div>
-                        <div className="font-medium ml-3 mt-1">
-                          {selectedItem ? (
-                            <div className="relative border-red-500 border w-24 py-2 px-8 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
-                              <button onClick={() => handleRemoveItem(item)} className="absolute top-2 left-1">
-                                <Remove fontSize="small" />
-                              </button>
-                              {selectedItem.qty}
-                              <button onClick={() => handleAddItem(item)} className="absolute top-2 right-1">
-                                <Add fontSize="small" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => handleAddItem(item)}
-                              className="relative border-red-500 border w-24 py-2 px-5 text-red-500 rounded-lg bg-red-50"
-                            >
-                              ADD
-                            </button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-            </div>
-          ))}
+                    );
+                  })}
+              </div>
+            );
+          })}
         </div>
       )}
       {cart.length > 0 && (
@@ -681,7 +938,10 @@ function Home() {
           <DialogContent className="h-fit">
             {!submitted && (
               <>
-                <div>Did everything go smoothly with your order? Please rate your experience or share a suggestion</div>
+                <div>
+                  Did everything go smoothly with your order? Please rate your experience or share a
+                  suggestion
+                </div>
                 <div className="my-4">
                   <div className="flex space-x-3 justify-center py-4 text-lg ">
                     {[1, 2, 3, 4, 5].map((value) => (
@@ -719,12 +979,17 @@ function Home() {
                         onChange={(e) => {
                           setComment(e.target.value);
                         }}
-                        className={"w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"}
+                        className={
+                          "w-full  border-gray-400 border-2 outline-none rounded-lg  px-3 p-2"
+                        }
                         placeholder="Leave a comment..."
                       />
                     )}
                     {rating > 0 && (
-                      <button className="p-3 bg-red-500 text-white rounded-2xl w-[100%]" type="submit">
+                      <button
+                        className="p-3 bg-red-500 text-white rounded-2xl w-[100%]"
+                        type="submit"
+                      >
                         Submit
                       </button>
                     )}
@@ -756,6 +1021,117 @@ function Home() {
           </DialogContent>
         </ModalDialog>
       </Modal>
+      <SwipeableDrawer
+        sx={{
+          "& .MuiDrawer-paper": {
+            borderTopLeftRadius: "20px",
+            borderTopRightRadius: "20px",
+          },
+        }}
+        PaperProps={{
+          sx: {
+            borderTopLeftRadius: "20px",
+            borderTopRightRadius: "20px",
+          },
+        }}
+        anchor={"bottom"}
+        open={openMealsModal}
+        onClose={() => {
+          setOpenMealsModal(false);
+        }}
+        onOpen={() => {
+          setOpenMealsModal(true);
+        }}
+      >
+        <div className=" font-montserrat p-3">
+          <div className="flex mt-2 justify-between">
+            <div className="text-2xl font-bold text-gray-700">Add-On</div>
+            <button
+              onClick={() => {
+                setOpenMealsModal(false);
+              }}
+            >
+              <Close />
+            </button>
+          </div>
+          <DialogContent className="h-fit">
+            <div className="font-montserrat mb-4 text-sm text-gray-600 font-medium">
+              Add Items with your meal
+            </div>
+            <div className=" max-h-[60vh] overflow-scroll">
+              {Object.values(items)
+                .flat()
+                .filter(
+                  (item: MenuItem) => item.bestSeller && item.category !== "complementary meals"
+                )
+                .map((item: MenuItem) => {
+                  const selectedItem = cart.find((cartItem) => cartItem.item_id === item.item_id);
+                  return (
+                    <div
+                      key={item.item_id}
+                      className="text-xs my-2  rounded-md border flex flex-col justify-between p-2"
+                    >
+                      <div>
+                        <div className="font-semibold text-base">
+                          <Image
+                            src={item.type === "veg" ? Veg : Nonveg}
+                            alt={item.type}
+                            className="inline relative mr-1 -top-0.5"
+                            height={15}
+                            width={15}
+                          />
+                          <span className="font-montserrat">{item.name}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between ">
+                        <div className="text-sm">₹ {item.price}</div>
+                        {selectedItem ? (
+                          <div className="relative border-red-500 border w-20 py-2 text-[17px] px-2 text-red-500 rounded-lg bg-red-50 flex items-center justify-center">
+                            <button
+                              onClick={() => handleRemoveItem(item)}
+                              className="absolute top-2 left-1"
+                            >
+                              <Remove fontSize="small" />
+                            </button>
+                            {selectedItem.qty}
+                            <button
+                              onClick={() => {
+                                handleAddItem(item);
+                              }}
+                              className="absolute top-2 right-1"
+                            >
+                              <Add fontSize="small" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handleAddItem(item);
+                            }}
+                            className="relative border-red-500 border w-20  py-2 px-2 text-red-500 rounded-lg bg-red-50"
+                          >
+                            ADD
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  setOpenMealsModal(false);
+                }}
+                className=" border font-montserrat text-white text-xl py-3 font-medium bg-red-500 rounded-2xl w-full p-2"
+              >
+                Add Item
+              </button>
+            </div>
+          </DialogContent>
+        </div>
+      </SwipeableDrawer>
+
       <Snackbar
         open={alert}
         autoHideDuration={5000}
@@ -766,7 +1142,7 @@ function Home() {
       >
         <div className="flex justify-between w-full">
           <div>
-            <Info />
+            <Info className="mr-1" />
             {message}
           </div>
           <div onClick={() => setAlert(false)} className="cursor-pointer hover:bg-[#f3eded]">
