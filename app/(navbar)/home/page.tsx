@@ -122,7 +122,8 @@ function Home() {
           }
         }
         const guestData: guestDataType = await fetchGuestData(auth.guest_email);
-        if (guestData.company.toLowerCase() === "mmt" && guestData.company.toLowerCase() === "personal") {
+        // console.log("guestData: ", guestData.company.toLowerCase())
+        if (guestData.company.toLowerCase() === "mmt booking" || guestData.company.toLowerCase() === "mmt" || guestData.company.toLowerCase() === "personal") {
           setShowMeals(false);
         }
       }

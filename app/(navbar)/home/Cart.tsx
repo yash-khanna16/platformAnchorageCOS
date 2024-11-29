@@ -287,10 +287,14 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             setScheduleConfirmModal(true);
             setLoading(false);
           } else if (result.status === 401) {
+            console.log("result: ", result)
             if (result.data.mealsRedeemed) {
               console.log("Can't place order: ", result.data.mealsRedeemed);
               setErrorMessage(result.data.mealsRedeemed);
               setErrorType("meals");
+            } else if (result.data.message) {
+              setErrorMessage(result.data.message);
+              setErrorType("message");
             } else {
               console.log(
                 "Can't place order, following items not available: ",
@@ -990,6 +994,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 <span>
                   {errorMessage.split(":")[0]}:{" "}
                   <span className="font-extrabold">{errorMessage.split(":")[1]}</span>
+                </span>
+              )}
+              {errorType === "message" && (
+                <span>
+                  {errorMessage}
                 </span>
               )}
               {errorType === "notAvailable" && (
