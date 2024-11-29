@@ -9,7 +9,7 @@ import { sendGAEvent } from "@next/third-parties/google";
 
 export default function Confirmation({ selectedBooking }: { selectedBooking: BookingDataType }) {
   const router = useRouter();
-  const restrictedCompanies = ["PERSONAL","MMT BOOKING"]
+  const restrictedCompanies = ["PERSONAL","MMT BOOKING","MMT"]
   return (
     <div className=" font-montserrat w-screen h-screen bg-white rounded-2xl mx-auto px-8  space-y-8">
       {/* Success Header */}
