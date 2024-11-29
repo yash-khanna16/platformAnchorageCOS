@@ -8,6 +8,7 @@ import { useFreeItems } from "@/lib/FreeCartContext";
 import { getAuthCustomer } from "@/app/actions/cookie";
 import { useCart } from "@/lib/CartContext";
 import { sendGAEvent } from "@next/third-parties/google";
+import { sendGAEvent } from "@next/third-parties/google";
 
 export type Coupon = {
   coupon_id: string;
