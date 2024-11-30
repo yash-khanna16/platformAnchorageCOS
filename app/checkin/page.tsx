@@ -31,7 +31,7 @@ export type BookingDataType = {
 };
 
 export default function Page() {
-  const [step, setStep] = useState<number>(4);
+  const [step, setStep] = useState<number>(1);
   const [room, setRoom] = useState("");
   const [bookingData, setBookingData] = useState<BookingDataType[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<BookingDataType>({
