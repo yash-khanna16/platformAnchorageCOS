@@ -29,9 +29,9 @@ export default function Confirmation({ selectedBooking }: { selectedBooking: Boo
 
       {/* Coupon Section */}
       <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 space-y-3">
-        <p className="text-slate-500 font-medium text-center">Get a free lemonade on orders over ₹150 with the code below!</p>
+        <p className="text-slate-500 font-medium text-center">Get a free lemonade on orders over ₹200 with the code below!</p>
         <div className="bg-white rounded-lg p-3 text-center shadow-sm">
-          <span className="text-2xl font-bold tracking-wider text-red-600">CHECKIN150</span>
+          <span className="text-2xl font-bold tracking-wider text-red-600">CHECKIN200</span>
         </div>
         <button
           onClick={() => {
