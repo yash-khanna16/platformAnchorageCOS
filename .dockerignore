@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Next.js build output
+.next
+out
+
+# VCS
+.git
+.gitignore
+
+# Editor
+.vscode
+*.swp
+.DS_Store
