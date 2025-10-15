@@ -1,21 +1,35 @@
+"use server";
+
 import AWS from "aws-sdk";
 
-// Initialize S3 client
-const s3 = new AWS.S3({
-  accessKeyId: process.env.NEXT_PUBLIC_ACCESS_KEY_ID,
-  secretAccessKey: process.env.NEXT_PUBLIC_SECRET_ACCESS_KEY,
-  region: process.env.NEXT_PUBLIC_REGION,
-});
-
-export async function uploadDocument(file: File, name: string) {
+export async function uploadDocument(formData: FormData) {
   try {
-    const fileExtension = file.name.split('.').pop(); // Get the last part after the dot
+    // Extract file and name from FormData
+    const file = formData.get("file") as File;
+    const name = formData.get("name") as string;
+
+    if (!file || !name) {
+      throw new Error("File and name are required");
+    }
+
+    // Initialize S3 client inside the function to use runtime environment variables
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION,
+    });
+
+    const fileExtension = file.name.split(".").pop(); // Get the last part after the dot
     const key = `${name}.${fileExtension}`; // Create the new file name
 
+    // Convert File to Buffer for S3 upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     const params = {
-      Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME as string,
+      Bucket: process.env.AWS_BUCKET_NAME as string,
       Key: key, // Use the file's name as the S3 key
-      Body: file,
+      Body: buffer,
       ContentType: file.type, // Important to set the correct content type
       ACL: "public-read", // Set access permissions (optional)
     };

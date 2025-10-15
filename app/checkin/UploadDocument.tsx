@@ -55,7 +55,13 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
       try {
         const file = e.target.files[0];
         setUploadLoadingFront(true);
-        const res = await uploadDocument(file, selectedBooking.booking_id + "_" + documentType);
+
+        // Create FormData and append file and name
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", selectedBooking.booking_id + "_" + documentType);
+
+        const res = await uploadDocument(formData);
         setDocumentURLFront(res);
         setUploadLoadingFront(false);
         setAlert(true);
@@ -65,6 +71,7 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
       } catch (error) {
         setUploadLoadingFront(false);
         setAlert(true);
+        console.log("error: ", error);
         setMessage("Something went wrong! Please try again later.");
       }
     }
@@ -81,7 +88,13 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
       try {
         const file = e.target.files[0];
         setUploadLoadingBack(true);
-        const res = await uploadDocument(file, selectedBooking.booking_id + "_" + documentType + "_back");
+
+        // Create FormData and append file and name
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", selectedBooking.booking_id + "_" + documentType + "_back");
+
+        const res = await uploadDocument(formData);
         setDocumentURLBack(res);
         setUploadLoadingBack(false);
         setAlert(true);
@@ -192,7 +205,9 @@ export default function UploadDocument({ step, setStep, room, setSelectedBooking
                         </div>
                       )}
                       <div className="">
-                        <div className="font-semibold text-slate-800 capitalize">{documentType + " Front" || "Document Type"}</div>
+                        <div className="font-semibold text-slate-800 capitalize">
+                          {documentType + " Front" || "Document Type"}
+                        </div>
                         <div className="text-sm text-slate-600">{uploadedFileFront.name}</div>
                       </div>
                     </div>
