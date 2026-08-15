@@ -31,7 +31,8 @@ export async function uploadDocument(formData: FormData) {
       Key: key, // Use the file's name as the S3 key
       Body: buffer,
       ContentType: file.type, // Important to set the correct content type
-      ACL: "public-read", // Set access permissions (optional)
+      // Guest ID documents are sensitive (PII) - keep them private.
+      // Admin viewing is done via signed URLs from the backend.
     };
 
     // Upload file to S3
