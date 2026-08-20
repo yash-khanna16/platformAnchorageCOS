@@ -716,7 +716,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 {discount === 0 && <span className="text-sm">₹ {total + taxesAndOtherCharges}</span>}
                 {discount !== 0 && (
                   <>
-                    <span className="line-through text-sm">₹ {total}</span>
+                    <span className="line-through text-sm">₹ {total + taxesAndOtherCharges}</span>
                     <span>₹ {total - discount + taxesAndOtherCharges}</span>{" "}
                   </>
                 )}
