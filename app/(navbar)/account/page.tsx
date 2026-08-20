@@ -33,6 +33,9 @@ type OrderType = {
   feedback: string | null;
   rating: number;
   discount: number;
+  platformFee?: number;
+  gst?: number;
+  platformFeeGst?: number;
   items: {
     itemDescription: string;
     itemId: string;
@@ -70,7 +73,8 @@ function Account() {
   const [feedback, setFeedback] = useState(false);
   const [ratingStay, setRatingStay] = useState(0);
   const [commentStay, setCommentStay] = useState("");
-  const platformFee = 2;
+  const PLATFORM_FEE_FALLBACK = 15;
+  const GST_RATE = 0.05;
   const router = useRouter();
   const categories: string[] = ["Food", "Essentials"];
   const [selected, setSelected] = useState("Food");
@@ -288,6 +292,16 @@ function Account() {
     return items.reduce((total, item) => total + item.itemQty * item.itemPrice, 0);
   };
 
+  // Prefer the amounts actually charged/stored on the order - fall back to a
+  // live estimate only for orders placed before these were persisted.
+  const getOrderCharges = (order: OrderType) => {
+    const subtotal = calculateTotal(order.items);
+    const platformFee = order.platformFee ?? (!hasMealItems(order) ? PLATFORM_FEE_FALLBACK : 0);
+    const gst = order.gst ?? Math.round((subtotal - order.discount) * GST_RATE);
+    const platformFeeGst = order.platformFeeGst ?? Math.round(platformFee * GST_RATE);
+    return { platformFee, gst, platformFeeGst, taxesAndOtherCharges: gst + platformFee + platformFeeGst };
+  };
+
   return (
     <div className=" font-montserrat">
       <div className="sticky shadow-md top-0 z-10 bg-white  ">
@@ -363,19 +377,35 @@ function Account() {
                             <span className=" ">₹{order.discount}</span>
                           </div>
                         )}
-                        {!hasMealItems(order) && (
+                        <div className="flex justify-between">
+                          Taxes and Other Charges
+                          <span className=" ">₹{getOrderCharges(order).taxesAndOtherCharges}</span>
+                        </div>
+                        <div className="pl-3 space-y-1">
                           <div className="flex justify-between">
-                            Platform Fee
-                            <span className=" ">₹{platformFee}</span>
+                            GST on food (5%)
+                            <span className=" ">₹{getOrderCharges(order).gst}</span>
                           </div>
-                        )}
+                          {getOrderCharges(order).platformFee > 0 && (
+                            <>
+                              <div className="flex justify-between">
+                                Platform Fee
+                                <span className=" ">₹{getOrderCharges(order).platformFee}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                GST on Platform Fee (5%)
+                                <span className=" ">₹{getOrderCharges(order).platformFeeGst}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
                         <div className="flex justify-between text-red-600">
                           Total
                           <span className=" ">
                             ₹
                             {Number(calculateTotal(order.items).toFixed(2)) -
                               order.discount +
-                              (hasMealItems(order) ? 0 : platformFee)}
+                              getOrderCharges(order).taxesAndOtherCharges}
                           </span>
                         </div>
                       </div>
@@ -478,19 +508,35 @@ function Account() {
                               <span className=" ">₹{order.discount}</span>
                             </div>
                           )}
-                          {!hasMealItems(order) && (
+                          <div className="flex justify-between">
+                            Taxes and Other Charges
+                            <span className=" ">₹{getOrderCharges(order).taxesAndOtherCharges}</span>
+                          </div>
+                          <div className="pl-3 space-y-1">
                             <div className="flex justify-between">
-                              Platform Fee
-                              <span className=" ">₹{platformFee}</span>
+                              GST on food (5%)
+                              <span className=" ">₹{getOrderCharges(order).gst}</span>
                             </div>
-                          )}
+                            {getOrderCharges(order).platformFee > 0 && (
+                              <>
+                                <div className="flex justify-between">
+                                  Platform Fee
+                                  <span className=" ">₹{getOrderCharges(order).platformFee}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  GST on Platform Fee (5%)
+                                  <span className=" ">₹{getOrderCharges(order).platformFeeGst}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
                           <div className="flex justify-between text-red-600">
                             Total
                             <span className=" ">
                               ₹
                               {Number(calculateTotal(order.items).toFixed(2)) -
                                 order.discount +
-                                (hasMealItems(order) ? 0 : platformFee)}
+                                getOrderCharges(order).taxesAndOtherCharges}
                             </span>
                           </div>
                         </div>
