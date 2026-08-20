@@ -109,6 +109,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [step, setStep] = useState<number>(0);
   const [scheduleData, setScheduleData] = useState<ScheduleType>({ date: "", time: "13:00" });
   const [showTotal, setShowTotal] = useState(false);
+  const [showTaxes, setShowTaxes] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [scheduleConfirmModal, setScheduleConfirmModal] = useState(false);
   const [scheduleTimeError, setScheduleTimeError] = useState(false);
@@ -486,6 +487,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   }, [cartOpen]);
 
   const gst = Math.round((total - discount) * GST_RATE);
+  const platformFeeGst = Math.round(platformFee * GST_RATE);
+  const taxesAndOtherCharges = gst + platformFee + platformFeeGst;
 
   return (
     <div className="font-montserrat min-h-screen  h-fit overflow-auto  py-2 bg-[#f5f6fb]">
@@ -710,11 +713,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="flex space-x-3 items-center px-2">
               <span>Total</span>
               <span className="font-semibold space-x-2">
-                {discount === 0 && <span className="text-sm">₹ {total + gst + platformFee}</span>}
+                {discount === 0 && <span className="text-sm">₹ {total + taxesAndOtherCharges}</span>}
                 {discount !== 0 && (
                   <>
                     <span className="line-through text-sm">₹ {total}</span>
-                    <span>₹ {total - discount + gst + platformFee}</span>{" "}
+                    <span>₹ {total - discount + taxesAndOtherCharges}</span>{" "}
                   </>
                 )}
               </span>
@@ -733,11 +736,6 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               <div className="flex justify-between">
                 <div>Items subtotal </div> <div>₹ {total}</div>
               </div>
-              {platformFee > 0 && (
-                <div className="flex justify-between">
-                  <div>Platform Charges </div> <div>₹ {platformFee}</div>
-                </div>
-              )}
 
               {discount > 0 && (
                 <div className="flex justify-between">
@@ -745,12 +743,40 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
                 </div>
               )}
 
-              <div className="flex justify-between">
-                <div>GST (5%) </div> <div>₹ {gst}</div>
+              <div
+                onClick={() => setShowTaxes(!showTaxes)}
+                className="flex justify-between items-center cursor-pointer"
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Taxes and Other Charges</span>
+                  <KeyboardArrowDown
+                    className={`text-gray-500 transition-transform ${showTaxes ? "rotate-180" : ""}`}
+                    style={{ fontSize: 16 }}
+                  />
+                </div>
+                <div>₹ {taxesAndOtherCharges}</div>
               </div>
 
+              {showTaxes && (
+                <div className="pl-3 space-y-1">
+                  <div className="flex justify-between">
+                    <div>GST on food (5%) </div> <div>₹ {gst}</div>
+                  </div>
+                  {platformFee > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <div>Platform Fee </div> <div>₹ {platformFee}</div>
+                      </div>
+                      <div className="flex justify-between">
+                        <div>GST on Platform Fee (5%) </div> <div>₹ {platformFeeGst}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between">
-                <div>Total </div> <div>₹ {total - discount + gst + platformFee} </div>
+                <div>Total </div> <div>₹ {total - discount + taxesAndOtherCharges} </div>
               </div>
             </div>
           )}
