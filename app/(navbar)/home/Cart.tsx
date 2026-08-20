@@ -83,6 +83,9 @@ type CartPropsType = {
   toggleExpand: (id: string) => void;
 };
 
+const GST_RATE = 0.05;
+const PLATFORM_FEE = 15;
+
 const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, toggleExpand }) => {
   const [note, setNote] = useState(false);
   const [noteContent, setNoteContent] = useState("");
@@ -119,7 +122,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [errorType, setErrorType] = useState("");
-  const [platformFee, setPlatformFee] = useState<number>(2);
+  const [platformFee, setPlatformFee] = useState<number>(PLATFORM_FEE);
   const router = useRouter();
   const MEAL_IDS: Record<"BREAKFAST" | "LUNCH" | "DINNER", { veg: string; nonVeg: string }> = {
     BREAKFAST: {
@@ -162,7 +165,7 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     console.log("use effect ran: ", hasMealItems);
 
     if (hasMealItems) setPlatformFee(0);
-    else setPlatformFee(2);
+    else setPlatformFee(PLATFORM_FEE);
   }, [cart]);
 
   const validateCouponCode = async () => {
@@ -482,6 +485,8 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
     }
   }, [cartOpen]);
 
+  const gst = Math.round((total - discount) * GST_RATE);
+
   return (
     <div className="font-montserrat min-h-screen  h-fit overflow-auto  py-2 bg-[#f5f6fb]">
       <div className="mb-28">
@@ -705,11 +710,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
             <div className="flex space-x-3 items-center px-2">
               <span>Total</span>
               <span className="font-semibold space-x-2">
-                {discount === 0 && <span className="text-sm">₹ {total + platformFee}</span>}
+                {discount === 0 && <span className="text-sm">₹ {total + gst + platformFee}</span>}
                 {discount !== 0 && (
                   <>
                     <span className="line-through text-sm">₹ {total}</span>
-                    <span>₹ {total - discount + platformFee}</span>{" "}
+                    <span>₹ {total - discount + gst + platformFee}</span>{" "}
                   </>
                 )}
               </span>
@@ -741,7 +746,11 @@ const Cart: React.FC<CartPropsType> = ({ cartOpen, setCartOpen, expandedId, togg
               )}
 
               <div className="flex justify-between">
-                <div>Total </div> <div>₹ {total - discount + platformFee} </div>
+                <div>GST (5%) </div> <div>₹ {gst}</div>
+              </div>
+
+              <div className="flex justify-between">
+                <div>Total </div> <div>₹ {total - discount + gst + platformFee} </div>
               </div>
             </div>
           )}
